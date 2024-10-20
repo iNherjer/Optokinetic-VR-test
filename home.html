@@ -2,50 +2,61 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Optokinetischer Effekt - Diskokugel</title>
+    <title>Optokinetischer Effekt - Größere Diskokugel</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   </head>
   <body>
     <!-- A-Frame Szene -->
     <a-scene>
+      <!-- Benutzer kann sich frei bewegen -->
+      <a-entity id="cameraRig" position="0 1.6 0" movement-controls>
+        <a-camera></a-camera>
+      </a-entity>
+      
       <!-- Schwarzer Hintergrund -->
       <a-sky color="#000000"></a-sky>
-      <!-- Weiße Punkte -->
+
+      <!-- Weiße Punkte auf großer Kugel -->
       <a-entity id="points-group">
         <!-- Punkte werden durch JavaScript hinzugefügt -->
       </a-entity>
 
       <!-- Animationsskript -->
       <script>
-        // Anzahl der Punkte, Radius und Geschwindigkeit der Rotation
-        let numberOfPoints = 200; // Anzahl der Punkte um den Benutzer herum
-        let radius = 4; // Radius der Kreisbewegung
+        // Anzahl der Punkte, Größe der Kugel und Geschwindigkeit der Rotation
+        let numberOfPoints = 1000; // Mehr Punkte für das Raster
+        let radius = 10; // Größerer Radius für die "Kugel"
         let speed = 0.005; // Rotationsgeschwindigkeit
 
-        // Funktion, um Punkte zu erstellen
+        // Funktion, um die Punkte in einem gleichmäßigen Raster zu erzeugen
         function createPoints() {
           let pointsGroup = document.getElementById('points-group');
           
-          for (let i = 0; i < numberOfPoints; i++) {
-            // Erstelle Punkt (kleine weiße Kugel)
-            let point = document.createElement('a-sphere');
-            point.setAttribute('radius', 0.05); // Punktgröße
-            point.setAttribute('color', '#FFFFFF');
-            
-            // Zufällige Winkelposition auf einer Kugel
-            let theta = Math.random() * 2 * Math.PI; // Winkel um die Y-Achse (horizontal)
-            let phi = Math.random() * Math.PI; // Winkel um die X-Achse (vertikal)
-            
-            // Berechne die Position des Punktes basierend auf Kugelkoordinaten
-            let x = radius * Math.sin(phi) * Math.cos(theta);
-            let y = radius * Math.cos(phi);
-            let z = radius * Math.sin(phi) * Math.sin(theta);
-            
-            point.setAttribute('position', `${x} ${y} ${z}`);
-            point.setAttribute('theta', theta); // Speichere den Winkel für die spätere Bewegung
-            point.setAttribute('phi', phi); // Speichere den Winkel für die spätere Bewegung
+          // Definiere die Anzahl der Schritte (gleichmäßiges Raster)
+          let steps = Math.floor(Math.sqrt(numberOfPoints)); // Wurzel der Anzahl der Punkte für gleichmäßiges Raster
+          
+          for (let i = 0; i < steps; i++) {
+            let theta = (i / steps) * Math.PI * 2; // Winkel um die Y-Achse (horizontal)
 
-            pointsGroup.appendChild(point);
+            for (let j = 0; j < steps; j++) {
+              let phi = (j / steps) * Math.PI; // Winkel um die X-Achse (vertikal)
+
+              // Erstelle Punkt (kleine weiße Kugel)
+              let point = document.createElement('a-sphere');
+              point.setAttribute('radius', 0.03); // Punktgröße
+              point.setAttribute('color', '#FFFFFF');
+              
+              // Berechne die Position des Punktes basierend auf Kugelkoordinaten
+              let x = radius * Math.sin(phi) * Math.cos(theta);
+              let y = radius * Math.cos(phi);
+              let z = radius * Math.sin(phi) * Math.sin(theta);
+              
+              point.setAttribute('position', `${x} ${y} ${z}`);
+              point.setAttribute('theta', theta); // Speichere den Winkel für die spätere Bewegung
+              point.setAttribute('phi', phi); // Speichere den Winkel für die spätere Bewegung
+
+              pointsGroup.appendChild(point);
+            }
           }
         }
 
