@@ -2,16 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Optokinetischer Effekt - Größere Diskokugel</title>
+    <title>Optokinetischer Effekt - Größere Diskokugel mit WebXR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   </head>
   <body>
-    <!-- A-Frame Szene -->
-    <a-scene>
-      <!-- Benutzer kann sich frei bewegen -->
-      <a-entity id="cameraRig" position="0 1.6 0" movement-controls>
-        <a-camera></a-camera>
+    <!-- A-Frame Szene mit VR-Umgebung -->
+    <a-scene vr-mode-ui="enabled: true" embedded>
+      <!-- Kamera und Bewegung -->
+      <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
+        <a-camera position="0 0 0"></a-camera>
       </a-entity>
+      
       <!-- Schwarzer Hintergrund -->
       <a-sky color="#000000"></a-sky>
 
