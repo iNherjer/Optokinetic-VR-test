@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Optokinetischer Effekt - Diskokugel</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <!-- A-Frame Szene -->
+    <a-scene>
+      <!-- Schwarzer Hintergrund -->
+      <a-sky color="#000000"></a-sky>
+      
+      <!-- Weiße Punkte -->
+      <a-entity id="points-group">
+        <!-- Punkte werden durch JavaScript hinzugefügt -->
+      </a-entity>
+
+      <!-- Animationsskript -->
+      <script>
+        // Anzahl der Punkte, Radius und Geschwindigkeit der Rotation
+        let numberOfPoints = 200; // Anzahl der Punkte um den Benutzer herum
+        let radius = 4; // Radius der Kreisbewegung
+        let speed = 0.005; // Rotationsgeschwindigkeit
+
+        // Funktion, um Punkte zu erstellen
+        function createPoints() {
+          let pointsGroup = document.getElementById('points-group');
+          
+          for (let i = 0; i < numberOfPoints; i++) {
+            // Erstelle Punkt (kleine weiße Kugel)
+            let point = document.createElement('a-sphere');
+            point.setAttribute('radius', 0.05); // Punktgröße
+            point.setAttribute('color', '#FFFFFF');
+            
+            // Zufällige Winkelposition auf einer Kugel
+            let theta = Math.random() * 2 * Math.PI; // Winkel um die Y-Achse (horizontal)
+            let phi = Math.random() * Math.PI; // Winkel um die X-Achse (vertikal)
+            
+            // Berechne die Position des Punktes basierend auf Kugelkoordinaten
+            let x = radius * Math.sin(phi) * Math.cos(theta);
+            let y = radius * Math.cos(phi);
+            let z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            point.setAttribute('position', `${x} ${y} ${z}`);
+            point.setAttribute('theta', theta); // Speichere den Winkel für die spätere Bewegung
+            point.setAttribute('phi', phi); // Speichere den Winkel für die spätere Bewegung
+
+            pointsGroup.appendChild(point);
+          }
+        }
+
+        // Bewegung der Punkte aktualisieren (Rotation um den Betrachter)
+        function rotatePoints() {
+          let points = document.querySelectorAll('a-sphere');
+          
+          points.forEach((point) => {
+            let theta = parseFloat(point.getAttribute('theta'));
+            let phi = parseFloat(point.getAttribute('phi'));
+            
+            // Erhöhe den Winkel theta, um eine Rotation zu erzeugen
+            theta += speed;
+            point.setAttribute('theta', theta); // Aktualisiere den Winkel
+            
+            // Berechne die neue Position des Punktes basierend auf dem aktualisierten Winkel
+            let x = radius * Math.sin(phi) * Math.cos(theta);
+            let y = radius * Math.cos(phi);
+            let z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            point.setAttribute('position', `${x} ${y} ${z}`);
+          });
+          
+          // Wiederhole die Bewegung in jedem Frame
+          requestAnimationFrame(rotatePoints);
+        }
+
+        // Punkte erstellen und Bewegung starten
+        createPoints();
+        rotatePoints();
+      </script>
+    </a-scene>
+  </body>
+</html>
