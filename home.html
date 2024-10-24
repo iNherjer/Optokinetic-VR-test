@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Korrigierte Version</title>
+    <title>A-Frame Optokinetik - Verbesserte Version</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
   <body>
@@ -39,7 +39,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: red"
             position="-1 0 0"
-            text="value: X; align: center;"
+            text="value: X; align: center; width: 5; color: white"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -47,7 +47,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: green"
             position="0 0 0"
-            text="value: Y; align: center;"
+            text="value: Y; align: center; width: 5; color: white"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -55,7 +55,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: blue"
             position="1 0 0"
-            text="value: Z; align: center;"
+            text="value: Z; align: center; width: 5; color: white"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -67,7 +67,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: yellow"
             position="-0.5 0 0"
-            text="value: +; align: center;"
+            text="value: +; align: center; width: 5; color: black"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -75,7 +75,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: orange"
             position="0.5 0 0"
-            text="value: -; align: center;"
+            text="value: -; align: center; width: 5; color: black"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -86,7 +86,7 @@
           geometry="primitive: plane; width: 1; height: 0.5"
           material="color: purple"
           position="0 -1.4 0"
-          text="value: Sound An/Aus; align: center;"
+          text="value: Sound An/Aus; align: center; width: 5; color: white"
           class="clickable"
         ></a-entity>
       </a-entity>
@@ -95,7 +95,7 @@
       <a-entity
         id="debugText"
         position="0 2 -2"
-        text="value: Warten auf Eingabe...; color: yellow; width: 4;"
+        text="value: Warten auf Eingabe...; color: yellow; width: 8;"
       ></a-entity>
 
       <!-- Controller für Interaktionen -->
@@ -107,7 +107,7 @@
           schema: {},
           init: function () {
             this.isAnimating = false;
-            this.animationSpeed = 1; // Rotationsgeschwindigkeit
+            this.animationSpeed = 0.2; // Initiale Rotationsgeschwindigkeit
             this.rotationAxis = new THREE.Vector3(0, 1, 0); // Standardmäßig um die Y-Achse rotieren
             this.createPoints();
           },
@@ -133,12 +133,17 @@
 
             // Sound an ein Objekt binden, das sich mit den Punkten bewegt
             const soundEntity = document.createElement('a-entity');
-            soundEntity.setAttribute('position', '20 0 0'); // Startposition auf dem Radius
+            soundEntity.setAttribute('position', '30 0 0'); // Startposition auf dem Radius
             soundEntity.setAttribute('sound', {
               src: '#hum-sound',
               autoplay: false,
               loop: true,
               positional: true,
+              distanceModel: 'inverse',
+              refDistance: 1,
+              maxDistance: 100,
+              rolloffFactor: 1,
+              panningModel: 'HRTF',
             });
             this.el.appendChild(soundEntity);
             this.soundEntity = soundEntity;
@@ -161,7 +166,7 @@
               'text',
               `value: Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}; color: ${
                 this.isAnimating ? 'green' : 'red'
-              }; width: 4`
+              }; width: 8`
             );
             console.log(`Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}`);
 
@@ -181,7 +186,7 @@
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
-              `value: Rotationsachse geändert; color: yellow; width: 4`
+              `value: Rotationsachse geändert; color: yellow; width: 8`
             );
             console.log('Rotationsachse geändert.');
           },
@@ -191,7 +196,7 @@
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
-              `value: Geschwindigkeit: ${this.animationSpeed.toFixed(1)}; color: yellow; width: 4`
+              `value: Geschwindigkeit: ${this.animationSpeed.toFixed(1)}; color: yellow; width: 8`
             );
             console.log(`Geschwindigkeit angepasst: ${this.animationSpeed}`);
           },
@@ -226,12 +231,12 @@
         // Event Listener für die Geschwindigkeits-Buttons
         document.getElementById('speedUpButton').addEventListener('click', function () {
           const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(0.5);
+          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
         });
 
         document.getElementById('speedDownButton').addEventListener('click', function () {
           const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(-0.5);
+          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
         });
 
         // Event Listener für den Sound-Button
@@ -245,6 +250,17 @@
         rightController.addEventListener('triggerdown', function () {
           const pointsEntity = document.getElementById('points-entity');
           pointsEntity.components['optimized-points'].toggleAnimation();
+        });
+
+        // Event Listener für die A- und B-Tasten des rechten Controllers
+        rightController.addEventListener('abuttondown', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
+        });
+
+        rightController.addEventListener('bbuttondown', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
         });
       </script>
     </a-scene>
