@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>A-Frame Optokinetik - Punkte im Raster</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
   <body>
     <!-- A-Frame Szene -->
@@ -17,6 +17,9 @@
       >
         <a-camera></a-camera>
       </a-entity>
+
+      <!-- Lichtquelle hinzufügen -->
+      <a-entity light="type: ambient; color: #FFFFFF; intensity: 1"></a-entity>
 
       <!-- Schwarzer Hintergrund -->
       <a-sky color="#000000"></a-sky>
@@ -67,6 +70,7 @@
                 const point = document.createElement('a-sphere');
                 point.setAttribute('radius', 0.1);
                 point.setAttribute('color', '#FFFFFF');
+                point.setAttribute('material', 'shader: flat; color: #FFFFFF'); // Flat Shader verwenden
                 const x = radius * Math.sin(phi) * Math.cos(theta);
                 const y = radius * Math.cos(phi);
                 const z = radius * Math.sin(phi) * Math.sin(theta);
