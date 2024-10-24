@@ -2,136 +2,124 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Hand Tracking und Controller</title>
+    <title>A-Frame Optokinetik - Punkte im Raster</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   </head>
   <body>
-    <a-scene vr-mode-ui="enabled: true" xrweb="enabled: true">
-      <!-- Kamera Setup -->
+    <!-- A-Frame Szene -->
+    <a-scene>
+      <!-- Kamera und Bewegung -->
       <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
         <a-camera></a-camera>
       </a-entity>
 
-      <!-- Schwarzer Himmel -->
+      <!-- Schwarzer Hintergrund -->
       <a-sky color="#000000"></a-sky>
 
-      <!-- Punkte-Kugel -->
-      <a-entity id="points-group"></a-entity>
+      <!-- Kugel mit Punkten -->
+      <a-entity id="points-group">
+        <!-- Punkte werden durch JavaScript hinzugefügt -->
+      </a-entity>
 
-      <!-- Debugging-Anzeige -->
-      <a-entity id="debugText" position="0 2 -2" text="value: Warte auf Hand-Tracking oder Controller...; color: yellow; width: 4;"></a-entity>
+      <!-- Debugging Textanzeige -->
+      <a-entity id="debugText" position="0 2 -2" text="value: Warten auf Eingabe...; color: yellow; width: 4;"></a-entity>
 
-      <!-- Hand-Tracking Controller-Modelle (sichtbar machen) -->
-      <a-entity id="left-hand" hand-tracking-controls="hand: left" color="green"></a-entity>
-      <a-entity id="right-hand" hand-tracking-controls="hand: right" color="blue"></a-entity>
+      <!-- VR-Button zum Starten/Stoppen der Animation -->
+      <a-entity id="startButton" geometry="primitive: plane; width: 1; height: 0.5" material="color: green" position="0 1.5 -3" text="value: Start/Stop; align: center;" class="clickable"></a-entity>
 
-      <!-- VR Button -->
-      <a-entity id="startButton" geometry="primitive: plane; width: 1; height: 0.5" material="color: green" position="0 1.5 -3" text="value: Start/Stop; align: center;"></a-entity>
-
-      <!-- Skript für Punkte und Animation -->
+      <!-- Script für das Erstellen der Punkte und Animation -->
       <script>
-        const numberOfPoints = 1000;
-        const radius = 20;
+        const numberOfPoints = 1000;  // Anzahl der Punkte
+        const radius = 20;  // Radius der Kugel
         const pointsGroup = document.getElementById('points-group');
         const debugText = document.getElementById('debugText');
         const startButton = document.getElementById('startButton');
-        let isAnimating = false;
+        let isAnimating = false;  // Flag, um Animation zu steuern
+        let gamepadButtonPressed = false;  // A-Button-Status für Controller
 
+        // Punkte im Raster erzeugen
         function createPoints() {
-          const steps = Math.floor(Math.sqrt(numberOfPoints));
+          const steps = Math.floor(Math.sqrt(numberOfPoints));  // Für ein gleichmäßiges Raster
+          
           for (let i = 0; i < steps; i++) {
-            const theta = (i / steps) * Math.PI * 2;
+            const theta = (i / steps) * Math.PI * 2;  // Winkel um die Y-Achse
+
             for (let j = 0; j < steps; j++) {
-              const phi = (j / steps) * Math.PI;
+              const phi = (j / steps) * Math.PI;  // Winkel um die X-Achse
+
               const point = document.createElement('a-sphere');
-              point.setAttribute('radius', 0.1);
-              point.setAttribute('color', '#FFFFFF');
+              point.setAttribute('radius', 0.1);  // Größe der Punkte
+              point.setAttribute('color', '#FFFFFF');  // Farbe
+
               const x = radius * Math.sin(phi) * Math.cos(theta);
               const y = radius * Math.cos(phi);
               const z = radius * Math.sin(phi) * Math.sin(theta);
+              
               point.setAttribute('position', `${x} ${y} ${z}`);
+              point.setAttribute('theta', theta);
+              point.setAttribute('phi', phi);
+
               pointsGroup.appendChild(point);
             }
           }
         }
 
+        // Punkte animieren, indem sie um den Spieler rotieren
         function rotatePoints() {
-          if (!isAnimating) return;
+          if (!isAnimating) return;  // Stoppe Animation, wenn Flag auf false steht
           const points = document.querySelectorAll('a-sphere');
+          
           points.forEach((point) => {
-            let theta = parseFloat(point.getAttribute('theta')) || 0;
-            theta += 0.002;
+            let theta = parseFloat(point.getAttribute('theta'));
+            theta += 0.002;  // Rotationsgeschwindigkeit
             point.setAttribute('theta', theta);
+            
             const phi = parseFloat(point.getAttribute('phi'));
             const x = radius * Math.sin(phi) * Math.cos(theta);
             const y = radius * Math.cos(phi);
             const z = radius * Math.sin(phi) * Math.sin(theta);
+            
             point.setAttribute('position', `${x} ${y} ${z}`);
           });
-          requestAnimationFrame(rotatePoints);
+
+          requestAnimationFrame(rotatePoints);  // Animation in Endlosschleife
         }
 
+        // Punkte erstellen
         createPoints();
 
+        // Funktion, die die Animation startet/stoppt und das Debugging-Text aktualisiert
         function toggleAnimation() {
-          isAnimating = !isAnimating;
+          isAnimating = !isAnimating;  // Toggle Animation
           debugText.setAttribute('text', `value: Animation ${isAnimating ? 'gestartet' : 'gestoppt'}; color: ${isAnimating ? 'green' : 'red'}; width: 4`);
-          if (isAnimating) rotatePoints();
+          if (isAnimating) rotatePoints();  // Starte die Animation, falls aktiviert
         }
 
-        startButton.addEventListener('click', () => toggleAnimation());
-
-        // WebXR Session und Hand-Tracking
-        document.querySelector('a-scene').addEventListener('enter-vr', () => {
-          debugText.setAttribute('text', 'value: VR-Modus gestartet; color: green;');
-        });
-
-        document.querySelector('a-scene').addEventListener('exit-vr', () => {
-          debugText.setAttribute('text', 'value: VR-Modus verlassen; color: red;');
-        });
-
-        // Hand-Tracking oder Controller erkennen und anzeigen
-        document.querySelector('a-scene').addEventListener('enter-vr', () => {
-          const scene = document.querySelector('a-scene');
-          const session = scene.xrSession;
-
-          session.addEventListener('inputsourceschange', (event) => {
-            session.inputSources.forEach((inputSource) => {
-              if (inputSource.hand) {
-                debugText.setAttribute('text', 'value: Hand-Tracking aktiviert; color: green;');
-              } else if (inputSource.gamepad) {
-                debugText.setAttribute('text', 'value: Controller aktiviert; color: blue;');
-              }
-            });
-          });
-        });
-
-        // Controller-Input debuggen
-        function handleControllerInput() {
-          const scene = document.querySelector('a-scene');
-          const session = scene.xrSession;
-
-          if (session) {
-            session.addEventListener('inputsourceschange', () => {
-              session.inputSources.forEach((inputSource) => {
-                if (inputSource.gamepad) {
-                  const gamepad = inputSource.gamepad;
-                  const isPressed = gamepad.buttons[0].pressed;  // A-Taste oder Trigger
-                  if (isPressed) {
-                    debugText.setAttribute('text', 'value: A-Taste oder Trigger gedrückt; color: blue;');
-                    toggleAnimation();  // Animation starten/stoppen
-                  }
-                }
-              });
-            });
+        // Gamepad-Steuerung für die Animation
+        function checkGamepad() {
+          const gamepads = navigator.getGamepads();
+          if (gamepads[0]) {
+            const isPressed = gamepads[0].buttons[0].pressed;  // Taste A des Controllers
+            if (isPressed && !gamepadButtonPressed) {
+              gamepadButtonPressed = true;  // Setze Flag, wenn Taste gedrückt wurde
+              toggleAnimation();  // Animation starten/stoppen
+              debugText.setAttribute('text', `value: A-Taste gedrückt; color: yellow; width: 4`);
+            } else if (!isPressed && gamepadButtonPressed) {
+              gamepadButtonPressed = false;  // Zurücksetzen, wenn Taste losgelassen wurde
+              debugText.setAttribute('text', `value: A-Taste losgelassen; color: yellow; width: 4`);
+            }
           }
+          requestAnimationFrame(checkGamepad);  // Prüfe ständig auf Gamepad-Eingaben
         }
 
-        // Controller-Eingaben behandeln, wenn VR betreten wird
-        document.querySelector('a-scene').addEventListener('enter-vr', () => {
-          handleControllerInput();
+        // Event Listener für den VR-Button zum Starten/Stoppen
+        startButton.addEventListener('click', function () {
+          toggleAnimation();  // Animation starten/stoppen
+          debugText.setAttribute('text', `value: VR-Button gedrückt; color: yellow; width: 4`);
         });
+
+        // Gamepad-Überprüfung starten
+        checkGamepad();
       </script>
     </a-scene>
   </body>
