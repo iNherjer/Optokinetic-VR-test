@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Hand Tracking</title>
+    <title>A-Frame Optokinetik - Hand Tracking & Controller</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   </head>
   <body>
-    <a-scene xrweb="enabled: true" hand-tracking="true" vr-mode-ui="enabled: true">
+    <a-scene vr-mode-ui="enabled: true" xrweb="enabled: true">
       <!-- Kamera Setup -->
       <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
         <a-camera></a-camera>
@@ -22,8 +22,9 @@
       <!-- Debugging-Anzeige -->
       <a-entity id="debugText" position="0 2 -2" text="value: Warte auf Hand-Tracking oder Controller...; color: yellow; width: 4;"></a-entity>
 
-      <!-- Hand-Tracking Modell -->
-      <a-entity id="hand-tracking" hand-tracking-controls="hand: right"></a-entity>
+      <!-- Hand-Tracking Controller-Modelle (sichtbar machen) -->
+      <a-entity id="left-hand" hand-tracking-controls="hand: left" color="green"></a-entity>
+      <a-entity id="right-hand" hand-tracking-controls="hand: right" color="blue"></a-entity>
 
       <!-- VR Button -->
       <a-entity id="startButton" geometry="primitive: plane; width: 1; height: 0.5" material="color: green" position="0 1.5 -3" text="value: Start/Stop; align: center;"></a-entity>
@@ -90,6 +91,7 @@
           debugText.setAttribute('text', 'value: VR-Modus verlassen; color: red;');
         });
 
+        // Hand-Tracking oder Controller erkennen und anzeigen
         document.querySelector('a-scene').addEventListener('enter-vr', () => {
           const scene = document.querySelector('a-scene');
           const session = scene.xrSession;
@@ -98,9 +100,37 @@
             session.inputSources.forEach((inputSource) => {
               if (inputSource.hand) {
                 debugText.setAttribute('text', 'value: Hand-Tracking aktiviert; color: green;');
+              } else if (inputSource.gamepad) {
+                debugText.setAttribute('text', 'value: Controller aktiviert; color: blue;');
               }
             });
           });
+        });
+
+        // Controller-Input debuggen
+        function handleControllerInput() {
+          const scene = document.querySelector('a-scene');
+          const session = scene.xrSession;
+
+          if (session) {
+            session.addEventListener('inputsourceschange', () => {
+              session.inputSources.forEach((inputSource) => {
+                if (inputSource.gamepad) {
+                  const gamepad = inputSource.gamepad;
+                  const isPressed = gamepad.buttons[0].pressed;  // A-Taste oder Trigger
+                  if (isPressed) {
+                    debugText.setAttribute('text', 'value: A-Taste oder Trigger gedrückt; color: blue;');
+                    toggleAnimation();  // Animation starten/stoppen
+                  }
+                }
+              });
+            });
+          }
+        }
+
+        // Controller-Eingaben behandeln, wenn VR betreten wird
+        document.querySelector('a-scene').addEventListener('enter-vr', () => {
+          handleControllerInput();
         });
       </script>
     </a-scene>
