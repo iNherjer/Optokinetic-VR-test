@@ -21,11 +21,6 @@
         <!-- Punkte werden durch JavaScript hinzugefügt -->
       </a-entity>
 
-      <!-- VR-Button -->
-      <a-entity position="0 1.6 -3">
-        <a-plane id="vr-button" color="#FFFFFF" width="1" height="0.5" text="value: Enter VR; align: center;"></a-plane>
-      </a-entity>
-
       <!-- Script für das Erstellen der Punkte und Animation -->
       <script>
         const numberOfPoints = 1000;  // Anzahl der Punkte
@@ -82,12 +77,6 @@
         // Punkte erstellen und Animation starten
         createPoints();
         rotatePoints();
-
-        // Event Listener für den VR Button
-        const vrButton = document.getElementById('vr-button');
-        vrButton.addEventListener('click', () => {
-          document.querySelector('a-scene').enterVR();
-        });
       </script>
     </a-scene>
   </body>
