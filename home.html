@@ -1,19 +1,82 @@
 <!DOCTYPE html>
-  <html lang="en">
-<head>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>A-Frame Optokinetik - Punkte im Raster</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <!-- A-Frame Szene -->
+    <a-scene>
+      <!-- Kamera und Bewegung -->
+      <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
+        <a-camera></a-camera>
+      </a-entity>
 
-<meta http-equiv="origin-trial" data-feature="WebVR (For Chrome M59+)" data-expires="2017-07-28" content="ArFv1ZeTwzkhjNE00uAE+XtiQB41fwqG/TqlFMLrepd9sforQSvQE/tgfIbUMYNuNre4QR1k4/z8xp2mV3dbhwwAAABeeyJvcmlnaW4iOiJodHRwczovL2FmcmFtZS5pbzo0NDMiLCJmZWF0dXJlIjoiV2ViVlIxLjEiLCJleHBpcnkiOjE1MDEyMTcwMDIsImlzU3ViZG9tYWluIjp0cnVlfQ==">
-<meta charset="utf-8">
-<title>Hello, World! • A-Frame</title>
-<meta name="description" content="Hello, World! • A-Frame">
-<script src="../../../dist/aframe-master.min.js"></script>
-</head>
-<body>
-<a-scene background="color: #ECECEC">
-<a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow></a-box>
-<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow></a-sphere>
-<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow></a-cylinder>
-<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow></a-plane>
-</a-scene>
-</body>
+      <!-- Schwarzer Hintergrund -->
+      <a-sky color="#000000"></a-sky>
+
+      <!-- Kugel mit Punkten -->
+      <a-entity id="points-group">
+        <!-- Punkte werden durch JavaScript hinzugefügt -->
+      </a-entity>
+
+      <!-- Script für das Erstellen der Punkte -->
+      <script>
+        const numberOfPoints = 1000;  // Anzahl der Punkte
+        const radius = 20;  // Radius der Kugel
+        const pointsGroup = document.getElementById('points-group');
+
+        // Punkte im Raster erzeugen
+        function createPoints() {
+          const steps = Math.floor(Math.sqrt(numberOfPoints));  // Für ein gleichmäßiges Raster
+          
+          for (let i = 0; i < steps; i++) {
+            const theta = (i / steps) * Math.PI * 2;  // Winkel um die Y-Achse
+
+            for (let j = 0; j < steps; j++) {
+              const phi = (j / steps) * Math.PI;  // Winkel um die X-Achse
+
+              const point = document.createElement('a-sphere');
+              point.setAttribute('radius', 0.1);  // Größe der Punkte
+              point.setAttribute('color', '#FFFFFF');  // Farbe
+
+              const x = radius * Math.sin(phi) * Math.cos(theta);
+              const y = radius * Math.cos(phi);
+              const z = radius * Math.sin(phi) * Math.sin(theta);
+              
+              point.setAttribute('position', `${x} ${y} ${z}`);
+              point.setAttribute('theta', theta);
+              point.setAttribute('phi', phi);
+
+              pointsGroup.appendChild(point);
+            }
+          }
+        }
+
+        // Punkte animieren, indem sie um den Spieler rotieren
+        function rotatePoints() {
+          const points = document.querySelectorAll('a-sphere');
+          
+          points.forEach((point) => {
+            let theta = parseFloat(point.getAttribute('theta'));
+            theta += 0.002;  // Rotationsgeschwindigkeit
+            point.setAttribute('theta', theta);
+            
+            const phi = parseFloat(point.getAttribute('phi'));
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            point.setAttribute('position', `${x} ${y} ${z}`);
+          });
+
+          requestAnimationFrame(rotatePoints);
+        }
+
+        createPoints();
+        rotatePoints();
+      </script>
+    </a-scene>
+  </body>
 </html>
