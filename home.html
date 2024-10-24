@@ -21,12 +21,22 @@
         <!-- Punkte werden durch JavaScript hinzugefügt -->
       </a-entity>
 
+      <!-- Debugging Textanzeige -->
+      <a-entity id="debugText" position="0 2 -2" text="value: Warten auf Eingabe...; color: yellow; width: 4;"></a-entity>
+
+      <!-- VR-Button zum Starten/Stoppen der Animation -->
+      <a-entity id="startButton" geometry="primitive: plane; width: 1; height: 0.5" material="color: green" position="0 1.5 -3" text="value: Start/Stop; align: center;"></a-entity>
+
       <!-- Script für das Erstellen der Punkte und Animation -->
       <script>
         const numberOfPoints = 1000;  // Anzahl der Punkte
         const radius = 20;  // Radius der Kugel
         const pointsGroup = document.getElementById('points-group');
+        const debugText = document.getElementById('debugText');
+        const startButton = document.getElementById('startButton');
         let isAnimating = false;  // Flag, um Animation zu steuern
+        let buttonPressed = false;  // A-Button-Status für Controller
+        let startButtonPressed = false;  // VR-Button-Status
 
         // Punkte im Raster erzeugen
         function createPoints() {
@@ -79,20 +89,35 @@
         // Punkte erstellen
         createPoints();
 
+        // Funktion, die die Animation startet/stoppt und das Debugging-Text aktualisiert
+        function toggleAnimation() {
+          isAnimating = !isAnimating;  // Toggle Animation
+          debugText.setAttribute('text', `value: Animation ${isAnimating ? 'gestartet' : 'gestoppt'}; color: ${isAnimating ? 'green' : 'red'}; width: 4`);
+          if (isAnimating) rotatePoints();  // Starte die Animation, falls aktiviert
+        }
+
         // Gamepad-Steuerung für die Animation
         function checkGamepad() {
           const gamepads = navigator.getGamepads();
           if (gamepads[0]) {
-            const buttonPressed = gamepads[0].buttons[0].pressed;  // Taste A des Controllers
-            if (buttonPressed) {
-              isAnimating = !isAnimating;  // Toggle der Animation
-              if (isAnimating) rotatePoints();  // Starte Animation
+            const isPressed = gamepads[0].buttons[0].pressed;  // Taste A des Controllers
+            if (isPressed && !buttonPressed) {
+              buttonPressed = true;  // Setze Flag, wenn Taste gedrückt wurde
+              toggleAnimation();  // Animation starten/stoppen
+            } else if (!isPressed) {
+              buttonPressed = false;  // Zurücksetzen, wenn Taste losgelassen wurde
             }
           }
           requestAnimationFrame(checkGamepad);  // Prüfe ständig auf Gamepad-Eingaben
         }
 
-        checkGamepad();  // Starte Gamepad-Überprüfung
+        // Event Listener für den VR-Button zum Starten/Stoppen
+        startButton.addEventListener('click', function () {
+          toggleAnimation();  // Animation starten/stoppen
+        });
+
+        // Gamepad-Überprüfung starten
+        checkGamepad();
       </script>
     </a-scene>
   </body>
