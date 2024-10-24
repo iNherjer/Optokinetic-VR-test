@@ -9,110 +9,93 @@
     <!-- A-Frame Szene -->
     <a-scene>
       <!-- Kamera und Bewegung -->
-      <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
+      <a-entity id="cameraRig" position="0 1.6 0"
+                wasd-controls="acceleration: 50"
+                look-controls="pointerLockEnabled: true">
         <a-camera></a-camera>
       </a-entity>
 
       <!-- Schwarzer Hintergrund -->
       <a-sky color="#000000"></a-sky>
 
-      <!-- Kugel mit Punkten -->
-      <a-entity id="points-group">
-        <!-- Punkte werden durch JavaScript hinzugefügt -->
+      <!-- Kugel mit Punkten mit rotating-points Komponente -->
+      <a-entity id="points-group" rotating-points>
+        <!-- Punkte werden durch die Komponente erstellt -->
       </a-entity>
 
       <!-- Debugging Textanzeige -->
-      <a-entity id="debugText" position="0 2 -2" text="value: Warten auf Eingabe...; color: yellow; width: 4;"></a-entity>
+      <a-entity id="debugText" position="0 2 -2"
+                text="value: Warten auf Eingabe...; color: yellow; width: 4;"></a-entity>
 
       <!-- VR-Button zum Starten/Stoppen der Animation -->
-      <a-entity id="startButton" geometry="primitive: plane; width: 1; height: 0.5" material="color: green" position="0 1.5 -3" text="value: Start/Stop; align: center;" class="clickable"></a-entity>
+      <a-entity id="startButton"
+                geometry="primitive: plane; width: 1; height: 0.5"
+                material="color: green"
+                position="0 1.5 -3"
+                text="value: Start/Stop; align: center;"
+                class="clickable"></a-entity>
 
       <!-- Controller für Interaktionen -->
       <a-entity laser-controls="hand: right" id="rightController"></a-entity>
 
       <!-- Script für das Erstellen der Punkte und Animation -->
       <script>
-        const numberOfPoints = 1000;  // Anzahl der Punkte
-        const radius = 20;  // Radius der Kugel
-        const pointsGroup = document.getElementById('points-group');
-        const debugText = document.getElementById('debugText');
-        const startButton = document.getElementById('startButton');
-        let isAnimating = false;  // Flag, um Animation zu steuern
-        let animationFrameId;  // Speichert die ID des Animations-Frames
-
-        // Zusätzliche Debugging-Ausgabe
-        console.log("Script gestartet.");
-
-        // Punkte im Raster erzeugen
-        function createPoints() {
-          const steps = Math.floor(Math.sqrt(numberOfPoints));  // Für ein gleichmäßiges Raster
-          
-          for (let i = 0; i < steps; i++) {
-            const theta = (i / steps) * Math.PI * 2;  // Winkel um die Y-Achse
-
-            for (let j = 0; j < steps; j++) {
-              const phi = (j / steps) * Math.PI;  // Winkel um die X-Achse
-
-              const point = document.createElement('a-sphere');
-              point.setAttribute('radius', 0.1);  // Größe der Punkte
-              point.setAttribute('color', '#FFFFFF');  // Farbe
-
+        AFRAME.registerComponent('rotating-points', {
+          schema: {},
+          init: function () {
+            const numberOfPoints = 1000;  // Anzahl der Punkte
+            const radius = 20;  // Radius der Kugel
+            this.points = [];
+            this.isAnimating = false;
+            this.animationSpeed = 0.002; // Rotationsgeschwindigkeit
+            this.createPoints(numberOfPoints, radius);
+          },
+          createPoints: function (numberOfPoints, radius) {
+            const steps = Math.floor(Math.sqrt(numberOfPoints));
+            for (let i = 0; i < steps; i++) {
+              const theta = (i / steps) * Math.PI * 2;
+              for (let j = 0; j < steps; j++) {
+                const phi = (j / steps) * Math.PI;
+                const point = document.createElement('a-sphere');
+                point.setAttribute('radius', 0.1);
+                point.setAttribute('color', '#FFFFFF');
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.cos(phi);
+                const z = radius * Math.sin(phi) * Math.sin(theta);
+                point.setAttribute('position', { x: x, y: y, z: z });
+                point.userData = { theta: theta, phi: phi };
+                this.el.appendChild(point);
+                this.points.push(point);
+              }
+            }
+          },
+          tick: function (time, timeDelta) {
+            if (!this.isAnimating) return;
+            this.points.forEach((point) => {
+              let theta = point.userData.theta;
+              theta += this.animationSpeed;
+              point.userData.theta = theta;
+              const phi = point.userData.phi;
+              const radius = 20;
               const x = radius * Math.sin(phi) * Math.cos(theta);
               const y = radius * Math.cos(phi);
               const z = radius * Math.sin(phi) * Math.sin(theta);
-              
-              point.setAttribute('position', `${x} ${y} ${z}`);
-              point.setAttribute('theta', theta);
-              point.setAttribute('phi', phi);
-
-              pointsGroup.appendChild(point);
-            }
+              point.setAttribute('position', { x: x, y: y, z: z });
+            });
+          },
+          toggleAnimation: function () {
+            this.isAnimating = !this.isAnimating;
+            const debugText = document.getElementById('debugText');
+            debugText.setAttribute('text', `value: Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}; color: ${this.isAnimating ? 'green' : 'red'}; width: 4`);
+            console.log(`Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}`);
           }
-
-          console.log("Punkte erstellt.");
-        }
-
-        // Punkte animieren, indem sie um den Spieler rotieren
-        function rotatePoints() {
-          if (!isAnimating) return;  // Wenn Animation deaktiviert ist, nichts tun
-          
-          const points = document.querySelectorAll('a-sphere');
-          
-          points.forEach((point) => {
-            let theta = parseFloat(point.getAttribute('theta'));
-            theta += 0.002;  // Rotationsgeschwindigkeit
-            point.setAttribute('theta', theta);
-            
-            const phi = parseFloat(point.getAttribute('phi'));
-            const x = radius * Math.sin(phi) * Math.cos(theta);
-            const y = radius * Math.cos(phi);
-            const z = radius * Math.sin(phi) * Math.sin(theta);
-            
-            point.setAttribute('position', `${x} ${y} ${z}`);
-          });
-
-          animationFrameId = requestAnimationFrame(rotatePoints);  // Animation in Endlosschleife
-        }
-
-        // Punkte erstellen
-        createPoints();
-
-        // Funktion, die die Animation startet/stoppt und das Debugging-Text aktualisiert
-        function toggleAnimation() {
-          isAnimating = !isAnimating;  // Toggle Animation
-          debugText.setAttribute('text', `value: Animation ${isAnimating ? 'gestartet' : 'gestoppt'}; color: ${isAnimating ? 'green' : 'red'}; width: 4`);
-          console.log(`Animation ${isAnimating ? 'gestartet' : 'gestoppt'}`);
-
-          if (isAnimating) {
-            rotatePoints();  // Starte die Animation
-          } else {
-            cancelAnimationFrame(animationFrameId);  // Stoppe die Animation
-          }
-        }
+        });
 
         // Event Listener für den VR-Button zum Starten/Stoppen
-        startButton.addEventListener('click', function () {
-          toggleAnimation();  // Animation starten/stoppen
+        document.getElementById('startButton').addEventListener('click', function () {
+          const pointsGroup = document.getElementById('points-group');
+          pointsGroup.components['rotating-points'].toggleAnimation();
+          const debugText = document.getElementById('debugText');
           debugText.setAttribute('text', `value: VR-Button gedrückt; color: yellow; width: 4`);
           console.log("VR-Button gedrückt.");
         });
@@ -120,16 +103,18 @@
         // WebXR Eingabesystem für Controller-Ereignisse
         const rightController = document.getElementById('rightController');
         rightController.addEventListener('triggerdown', function () {
-          toggleAnimation();  // Animation starten/stoppen
+          const pointsGroup = document.getElementById('points-group');
+          pointsGroup.components['rotating-points'].toggleAnimation();
+          const debugText = document.getElementById('debugText');
           debugText.setAttribute('text', `value: Trigger gedrückt; color: yellow; width: 4`);
           console.log("Trigger gedrückt.");
         });
 
         rightController.addEventListener('triggerup', function () {
+          const debugText = document.getElementById('debugText');
           debugText.setAttribute('text', `value: Trigger losgelassen; color: yellow; width: 4`);
           console.log("Trigger losgelassen.");
         });
-
       </script>
     </a-scene>
   </body>
