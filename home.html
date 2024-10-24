@@ -37,6 +37,9 @@
         let isAnimating = false;  // Flag, um Animation zu steuern
         let gamepadButtonPressed = false;  // A-Button-Status für Controller
 
+        // Zusätzliche Debugging-Ausgabe
+        console.log("Script gestartet.");
+
         // Punkte im Raster erzeugen
         function createPoints() {
           const steps = Math.floor(Math.sqrt(numberOfPoints));  // Für ein gleichmäßiges Raster
@@ -62,6 +65,8 @@
               pointsGroup.appendChild(point);
             }
           }
+
+          console.log("Punkte erstellt.");
         }
 
         // Punkte animieren, indem sie um den Spieler rotieren
@@ -92,6 +97,7 @@
         function toggleAnimation() {
           isAnimating = !isAnimating;  // Toggle Animation
           debugText.setAttribute('text', `value: Animation ${isAnimating ? 'gestartet' : 'gestoppt'}; color: ${isAnimating ? 'green' : 'red'}; width: 4`);
+          console.log(`Animation ${isAnimating ? 'gestartet' : 'gestoppt'}`);
           if (isAnimating) rotatePoints();  // Starte die Animation, falls aktiviert
         }
 
@@ -104,10 +110,15 @@
               gamepadButtonPressed = true;  // Setze Flag, wenn Taste gedrückt wurde
               toggleAnimation();  // Animation starten/stoppen
               debugText.setAttribute('text', `value: A-Taste gedrückt; color: yellow; width: 4`);
+              console.log("A-Taste gedrückt");
             } else if (!isPressed && gamepadButtonPressed) {
               gamepadButtonPressed = false;  // Zurücksetzen, wenn Taste losgelassen wurde
               debugText.setAttribute('text', `value: A-Taste losgelassen; color: yellow; width: 4`);
+              console.log("A-Taste losgelassen");
             }
+          } else {
+            debugText.setAttribute('text', `value: Gamepad nicht erkannt; color: red; width: 4`);
+            console.log("Kein Gamepad erkannt.");
           }
           requestAnimationFrame(checkGamepad);  // Prüfe ständig auf Gamepad-Eingaben
         }
@@ -116,6 +127,7 @@
         startButton.addEventListener('click', function () {
           toggleAnimation();  // Animation starten/stoppen
           debugText.setAttribute('text', `value: VR-Button gedrückt; color: yellow; width: 4`);
+          console.log("VR-Button gedrückt.");
         });
 
         // Gamepad-Überprüfung starten
