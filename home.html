@@ -38,6 +38,7 @@
         const debugText = document.getElementById('debugText');
         const startButton = document.getElementById('startButton');
         let isAnimating = false;  // Flag, um Animation zu steuern
+        let animationFrameId;  // Speichert die ID des Animations-Frames
 
         // Zusätzliche Debugging-Ausgabe
         console.log("Script gestartet.");
@@ -73,7 +74,6 @@
 
         // Punkte animieren, indem sie um den Spieler rotieren
         function rotatePoints() {
-          if (!isAnimating) return;  // Stoppe Animation, wenn Flag auf false steht
           const points = document.querySelectorAll('a-sphere');
           
           points.forEach((point) => {
@@ -89,7 +89,7 @@
             point.setAttribute('position', `${x} ${y} ${z}`);
           });
 
-          requestAnimationFrame(rotatePoints);  // Animation in Endlosschleife
+          animationFrameId = requestAnimationFrame(rotatePoints);  // Animation in Endlosschleife
         }
 
         // Punkte erstellen
@@ -100,7 +100,12 @@
           isAnimating = !isAnimating;  // Toggle Animation
           debugText.setAttribute('text', `value: Animation ${isAnimating ? 'gestartet' : 'gestoppt'}; color: ${isAnimating ? 'green' : 'red'}; width: 4`);
           console.log(`Animation ${isAnimating ? 'gestartet' : 'gestoppt'}`);
-          if (isAnimating) rotatePoints();  // Starte die Animation, falls aktiviert
+
+          if (isAnimating) {
+            rotatePoints();  // Starte die Animation, falls aktiviert
+          } else {
+            cancelAnimationFrame(animationFrameId);  // Stoppe die Animation
+          }
         }
 
         // Event Listener für den VR-Button zum Starten/Stoppen
