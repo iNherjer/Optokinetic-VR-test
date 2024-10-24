@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Punkte im Raster</title>
+    <title>A-Frame Optokinetik - WebXR Support</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   </head>
   <body>
     <!-- A-Frame Szene -->
-    <a-scene>
+    <a-scene vr-mode-ui="enabled: true" xrweb="enabled: true">
       <!-- Kamera und Bewegung -->
       <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
         <a-camera></a-camera>
@@ -35,8 +35,6 @@
         const debugText = document.getElementById('debugText');
         const startButton = document.getElementById('startButton');
         let isAnimating = false;  // Flag, um Animation zu steuern
-        let buttonPressed = false;  // A-Button-Status für Controller
-        let startButtonPressed = false;  // VR-Button-Status
 
         // Punkte im Raster erzeugen
         function createPoints() {
@@ -96,28 +94,43 @@
           if (isAnimating) rotatePoints();  // Starte die Animation, falls aktiviert
         }
 
-        // Gamepad-Steuerung für die Animation
-        function checkGamepad() {
-          const gamepads = navigator.getGamepads();
-          if (gamepads[0]) {
-            const isPressed = gamepads[0].buttons[0].pressed;  // Taste A des Controllers
-            if (isPressed && !buttonPressed) {
-              buttonPressed = true;  // Setze Flag, wenn Taste gedrückt wurde
-              toggleAnimation();  // Animation starten/stoppen
-            } else if (!isPressed) {
-              buttonPressed = false;  // Zurücksetzen, wenn Taste losgelassen wurde
-            }
-          }
-          requestAnimationFrame(checkGamepad);  // Prüfe ständig auf Gamepad-Eingaben
-        }
+        // WebXR Integration
+        document.querySelector('a-scene').addEventListener('enter-vr', () => {
+          debugText.setAttribute('text', 'value: VR-Modus gestartet; color: green;');
+        });
+
+        document.querySelector('a-scene').addEventListener('exit-vr', () => {
+          debugText.setAttribute('text', 'value: VR-Modus verlassen; color: red;');
+        });
 
         // Event Listener für den VR-Button zum Starten/Stoppen
         startButton.addEventListener('click', function () {
           toggleAnimation();  // Animation starten/stoppen
         });
 
-        // Gamepad-Überprüfung starten
-        checkGamepad();
+        // WebXR Gamepad Input Handler
+        function handleControllerInput() {
+          const session = document.querySelector('a-scene').xrSession;
+          if (session) {
+            session.addEventListener('inputsourceschange', () => {
+              session.inputSources.forEach((inputSource) => {
+                if (inputSource.gamepad) {
+                  const gamepad = inputSource.gamepad;
+                  const isPressed = gamepad.buttons[0].pressed;  // Erkennung der A-Taste
+                  if (isPressed) {
+                    toggleAnimation();  // Animation starten/stoppen
+                  }
+                }
+              });
+            });
+          }
+        }
+
+        // Auf XR-Sitzung warten und dann Controller-Eingaben verarbeiten
+        document.querySelector('a-scene').addEventListener('enter-vr', () => {
+          handleControllerInput();
+        });
+
       </script>
     </a-scene>
   </body>
