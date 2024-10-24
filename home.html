@@ -26,6 +26,7 @@
         const numberOfPoints = 1000;  // Anzahl der Punkte
         const radius = 20;  // Radius der Kugel
         const pointsGroup = document.getElementById('points-group');
+        let isAnimating = false;  // Flag, um Animation zu steuern
 
         // Punkte im Raster erzeugen
         function createPoints() {
@@ -56,6 +57,7 @@
 
         // Punkte animieren, indem sie um den Spieler rotieren
         function rotatePoints() {
+          if (!isAnimating) return;  // Stoppe Animation, wenn Flag auf false steht
           const points = document.querySelectorAll('a-sphere');
           
           points.forEach((point) => {
@@ -71,12 +73,26 @@
             point.setAttribute('position', `${x} ${y} ${z}`);
           });
 
-          requestAnimationFrame(rotatePoints);
+          requestAnimationFrame(rotatePoints);  // Animation in Endlosschleife
         }
 
-        // Punkte erstellen und Animation starten
+        // Punkte erstellen
         createPoints();
-        rotatePoints();
+
+        // Gamepad-Steuerung für die Animation
+        function checkGamepad() {
+          const gamepads = navigator.getGamepads();
+          if (gamepads[0]) {
+            const buttonPressed = gamepads[0].buttons[0].pressed;  // Taste A des Controllers
+            if (buttonPressed) {
+              isAnimating = !isAnimating;  // Toggle der Animation
+              if (isAnimating) rotatePoints();  // Starte Animation
+            }
+          }
+          requestAnimationFrame(checkGamepad);  // Prüfe ständig auf Gamepad-Eingaben
+        }
+
+        checkGamepad();  // Starte Gamepad-Überprüfung
       </script>
     </a-scene>
   </body>
