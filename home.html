@@ -1,87 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Optokinetischer Effekt - WebXR Polyfill</title>
-    <!-- WebXR Polyfill für verbesserte VR-Unterstützung -->
-    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  </head>
-  <body>
-    <!-- A-Frame Szene mit WebXR-Unterstützung -->
-    <a-scene vr-mode-ui="enabled: true" renderer="antialias: true;">
-      <!-- Kamera und Bewegung -->
-      <a-entity id="cameraRig" position="0 1.6 0" wasd-controls="acceleration: 50" look-controls="pointerLockEnabled: true">
-        <a-camera></a-camera>
-      </a-entity>
+<html>
+<head>
 
-      <!-- Schwarzer Hintergrund -->
-      <a-sky color="#000000"></a-sky>
-
-      <!-- Weiße Punkte auf großer Kugel -->
-      <a-entity id="points-group">
-        <!-- Punkte werden durch JavaScript hinzugefügt -->
-      </a-entity>
-
-      <!-- Animationsskript -->
-      <script>
-        // Anzahl der Punkte, Größe der Kugel und Geschwindigkeit der Rotation
-        let numberOfPoints = 1000;
-        let radius = 10;
-        let speed = 0.005;
-
-        // Funktion, um die Punkte in einem gleichmäßigen Raster zu erzeugen
-        function createPoints() {
-          let pointsGroup = document.getElementById('points-group');
-          
-          let steps = Math.floor(Math.sqrt(numberOfPoints));
-          
-          for (let i = 0; i < steps; i++) {
-            let theta = (i / steps) * Math.PI * 2;
-
-            for (let j = 0; j < steps; j++) {
-              let phi = (j / steps) * Math.PI;
-
-              let point = document.createElement('a-sphere');
-              point.setAttribute('radius', 0.03);
-              point.setAttribute('color', '#FFFFFF');
-              
-              let x = radius * Math.sin(phi) * Math.cos(theta);
-              let y = radius * Math.cos(phi);
-              let z = radius * Math.sin(phi) * Math.sin(theta);
-              
-              point.setAttribute('position', `${x} ${y} ${z}`);
-              point.setAttribute('theta', theta);
-              point.setAttribute('phi', phi);
-
-              pointsGroup.appendChild(point);
-            }
-          }
-        }
-
-        function rotatePoints() {
-          let points = document.querySelectorAll('a-sphere');
-          
-          points.forEach((point) => {
-            let theta = parseFloat(point.getAttribute('theta'));
-            let phi = parseFloat(point.getAttribute('phi'));
-            
-            theta += speed;
-            point.setAttribute('theta', theta);
-            
-            let x = radius * Math.sin(phi) * Math.cos(theta);
-            let y = radius * Math.cos(phi);
-            let z = radius * Math.sin(phi) * Math.sin(theta);
-            
-            point.setAttribute('position', `${x} ${y} ${z}`);
-          });
-          
-          requestAnimationFrame(rotatePoints);
-        }
-
-        createPoints();
-        rotatePoints();
-      </script>
-    </a-scene>
-  </body>
+<meta http-equiv="origin-trial" data-feature="WebVR (For Chrome M59+)" data-expires="2017-07-28" content="ArFv1ZeTwzkhjNE00uAE+XtiQB41fwqG/TqlFMLrepd9sforQSvQE/tgfIbUMYNuNre4QR1k4/z8xp2mV3dbhwwAAABeeyJvcmlnaW4iOiJodHRwczovL2FmcmFtZS5pbzo0NDMiLCJmZWF0dXJlIjoiV2ViVlIxLjEiLCJleHBpcnkiOjE1MDEyMTcwMDIsImlzU3ViZG9tYWluIjp0cnVlfQ==">
+<meta charset="utf-8">
+<title>Hello, World! • A-Frame</title>
+<meta name="description" content="Hello, World! • A-Frame">
+<script src="../../../dist/aframe-master.min.js"></script>
+</head>
+<body>
+<a-scene background="color: #ECECEC">
+<a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow></a-box>
+<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow></a-sphere>
+<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow></a-cylinder>
+<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow></a-plane>
+</a-scene>
+</body>
 </html>
