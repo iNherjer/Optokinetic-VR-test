@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
-    <meta charset="UTF-8">
-    <title>A-Frame optokinetic </title>
+    <meta charset="UTF-8" />
+    <title>A-Frame Optokinetik - Optimiert mit Achsensteuerung und Sound</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <!-- A-Frame Extras für bessere Controller-Interaktion -->
+    <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   </head>
   <body>
     <!-- A-Frame Szene -->
@@ -31,8 +33,8 @@
 
       <!-- Audio Asset -->
       <a-assets>
-        <!-- Du kannst hier eine eigene Audiodatei verlinken -->
-        <audio id="hum-sound" src="path/to/your/hum-sound.mp3"></audio>
+        <!-- Stelle sicher, dass der Pfad zur Audiodatei korrekt ist -->
+        <audio id="hum-sound" src="hum-sound.mp3"></audio>
       </a-assets>
 
       <!-- Debugging Textanzeige -->
@@ -47,56 +49,28 @@
         id="startButton"
         geometry="primitive: plane; width: 1; height: 0.5"
         material="color: green"
-        position="-1 1.5 -2"
+        position="0 1.5 -2"
         text="value: Start/Stop; align: center;"
-        class="clickable"
+        class="clickable button"
       ></a-entity>
 
-      <!-- Buttons zur Änderung der Rotationsachse -->
-      <a-entity id="axisButtons" position="0 1 -2">
+      <!-- Buttons zum Kippen der Rotationsachse -->
+      <a-entity id="axisTiltButtons" position="0 1 -2">
         <a-entity
-          id="xButton"
+          id="tiltUpButton"
           geometry="primitive: plane; width: 0.5; height: 0.5"
-          material="color: red"
-          position="-0.6 0 0"
-          text="value: X; align: center;"
-          class="clickable"
-        ></a-entity>
-        <a-entity
-          id="yButton"
-          geometry="primitive: plane; width: 0.5; height: 0.5"
-          material="color: green"
-          position="0 0 0"
-          text="value: Y; align: center;"
-          class="clickable"
-        ></a-entity>
-        <a-entity
-          id="zButton"
-          geometry="primitive: plane; width: 0.5; height: 0.5"
-          material="color: blue"
-          position="0.6 0 0"
-          text="value: Z; align: center;"
-          class="clickable"
-        ></a-entity>
-      </a-entity>
-
-      <!-- Buttons zur Geschwindigkeitsanpassung -->
-      <a-entity id="speedButtons" position="0 0.5 -2">
-        <a-entity
-          id="speedUpButton"
-          geometry="primitive: plane; width: 0.5; height: 0.5"
-          material="color: yellow"
+          material="color: cyan"
           position="-0.3 0 0"
-          text="value: +; align: center;"
-          class="clickable"
+          text="value: ↑; align: center;"
+          class="clickable button"
         ></a-entity>
         <a-entity
-          id="speedDownButton"
+          id="tiltDownButton"
           geometry="primitive: plane; width: 0.5; height: 0.5"
-          material="color: orange"
+          material="color: magenta"
           position="0.3 0 0"
-          text="value: -; align: center;"
-          class="clickable"
+          text="value: ↓; align: center;"
+          class="clickable button"
         ></a-entity>
       </a-entity>
 
@@ -105,9 +79,9 @@
         id="soundToggleButton"
         geometry="primitive: plane; width: 1; height: 0.5"
         material="color: purple"
-        position="1 1.5 -2"
+        position="0 0.5 -2"
         text="value: Sound An/Aus; align: center;"
-        class="clickable"
+        class="clickable button"
       ></a-entity>
 
       <!-- Controller für Interaktionen -->
@@ -121,6 +95,7 @@
             this.isAnimating = false;
             this.animationSpeed = 1; // Rotationsgeschwindigkeit
             this.rotationAxis = new THREE.Vector3(0, 1, 0); // Standardmäßig um die Y-Achse rotieren
+            this.axisTiltAngle = 0; // Neigungswinkel der Rotationsachse
             this.createPoints();
           },
           createPoints: function () {
@@ -128,7 +103,11 @@
             const radius = 20;
             const positions = [];
             const geometry = new THREE.BufferGeometry();
-            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
+            const material = new THREE.PointsMaterial({
+              color: 0xffffff,
+              size: 0.05,
+              sizeAttenuation: true,
+            });
 
             for (let i = 0; i < numPoints; i++) {
               const theta = Math.random() * 2 * Math.PI;
@@ -139,13 +118,22 @@
               positions.push(x, y, z);
             }
 
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute(
+              'position',
+              new THREE.Float32BufferAttribute(positions, 3)
+            );
             this.points = new THREE.Points(geometry, material);
             this.el.setObject3D('mesh', this.points);
           },
           tick: function (time, timeDelta) {
             if (!this.isAnimating) return;
             const delta = timeDelta / 1000; // Konvertiere Zeitdelta in Sekunden
+
+            // Rotationsachse mit Neigungswinkel berechnen
+            const tiltRadians = (this.axisTiltAngle * Math.PI) / 180;
+            const axis = new THREE.Vector3(0, Math.cos(tiltRadians), Math.sin(tiltRadians));
+            this.rotationAxis = axis.normalize();
+
             this.points.rotateOnAxis(this.rotationAxis, this.animationSpeed * delta);
           },
           toggleAnimation: function () {
@@ -159,70 +147,46 @@
             );
             console.log(`Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}`);
           },
-          setRotationAxis: function (axis) {
-            this.rotationAxis = axis.normalize();
+          tiltAxis: function (deltaAngle) {
+            this.axisTiltAngle += deltaAngle;
+            this.axisTiltAngle %= 360; // Winkel auf 0-360 begrenzen
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
-              `value: Rotationsachse geändert; color: yellow; width: 4`
+              `value: Achsenneigung: ${this.axisTiltAngle}°; color: yellow; width: 4`
             );
-            console.log('Rotationsachse geändert.');
-          },
-          adjustSpeed: function (delta) {
-            this.animationSpeed += delta;
-            this.animationSpeed = Math.max(0.1, this.animationSpeed); // Mindestgeschwindigkeit
-            const debugText = document.getElementById('debugText');
-            debugText.setAttribute(
-              'text',
-              `value: Geschwindigkeit: ${this.animationSpeed.toFixed(1)}; color: yellow; width: 4`
-            );
-            console.log(`Geschwindigkeit angepasst: ${this.animationSpeed}`);
+            console.log(`Achsenneigung angepasst: ${this.axisTiltAngle}°`);
           },
         });
 
-        // Event Listener für den Start/Stop-Button
-        document.getElementById('startButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].toggleAnimation();
-        });
+        // Event Listener für Buttons
+        document.querySelectorAll('.button').forEach(function (button) {
+          button.addEventListener('click', function (evt) {
+            const id = evt.target.id;
+            const pointsEntity = document.getElementById('points-entity');
+            const soundEntity = document.querySelector('#sound-entity a-sound');
 
-        // Event Listener für die Achsen-Buttons
-        document.getElementById('xButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(1, 0, 0));
-        });
-
-        document.getElementById('yButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(0, 1, 0));
-        });
-
-        document.getElementById('zButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(0, 0, 1));
-        });
-
-        // Event Listener für die Geschwindigkeits-Buttons
-        document.getElementById('speedUpButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(0.5);
-        });
-
-        document.getElementById('speedDownButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(-0.5);
-        });
-
-        // Event Listener für den Sound-Button
-        document.getElementById('soundToggleButton').addEventListener('click', function () {
-          const soundEntity = document.querySelector('#sound-entity a-sound');
-          if (soundEntity.components.sound.isPlaying) {
-            soundEntity.components.sound.stopSound();
-            console.log('Sound gestoppt.');
-          } else {
-            soundEntity.components.sound.playSound();
-            console.log('Sound gestartet.');
-          }
+            switch (id) {
+              case 'startButton':
+                pointsEntity.components['optimized-points'].toggleAnimation();
+                break;
+              case 'tiltUpButton':
+                pointsEntity.components['optimized-points'].tiltAxis(30);
+                break;
+              case 'tiltDownButton':
+                pointsEntity.components['optimized-points'].tiltAxis(-30);
+                break;
+              case 'soundToggleButton':
+                if (soundEntity.components.sound.isPlaying) {
+                  soundEntity.components.sound.stopSound();
+                  console.log('Sound gestoppt.');
+                } else {
+                  soundEntity.components.sound.playSound();
+                  console.log('Sound gestartet.');
+                }
+                break;
+            }
+          });
         });
 
         // Event Listener für den Trigger des Controllers
