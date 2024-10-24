@@ -27,6 +27,9 @@
       <!-- VR-Button zum Starten/Stoppen der Animation -->
       <a-entity id="startButton" geometry="primitive: plane; width: 1; height: 0.5" material="color: green" position="0 1.5 -3" text="value: Start/Stop; align: center;" class="clickable"></a-entity>
 
+      <!-- Controller für Interaktionen -->
+      <a-entity laser-controls="hand: right" id="rightController"></a-entity>
+
       <!-- Script für das Erstellen der Punkte und Animation -->
       <script>
         const numberOfPoints = 1000;  // Anzahl der Punkte
@@ -35,7 +38,6 @@
         const debugText = document.getElementById('debugText');
         const startButton = document.getElementById('startButton');
         let isAnimating = false;  // Flag, um Animation zu steuern
-        let gamepadButtonPressed = false;  // A-Button-Status für Controller
 
         // Zusätzliche Debugging-Ausgabe
         console.log("Script gestartet.");
@@ -101,28 +103,6 @@
           if (isAnimating) rotatePoints();  // Starte die Animation, falls aktiviert
         }
 
-        // Gamepad-Steuerung für die Animation
-        function checkGamepad() {
-          const gamepads = navigator.getGamepads();
-          if (gamepads[0]) {
-            const isPressed = gamepads[0].buttons[0].pressed;  // Taste A des Controllers
-            if (isPressed && !gamepadButtonPressed) {
-              gamepadButtonPressed = true;  // Setze Flag, wenn Taste gedrückt wurde
-              toggleAnimation();  // Animation starten/stoppen
-              debugText.setAttribute('text', `value: A-Taste gedrückt; color: yellow; width: 4`);
-              console.log("A-Taste gedrückt");
-            } else if (!isPressed && gamepadButtonPressed) {
-              gamepadButtonPressed = false;  // Zurücksetzen, wenn Taste losgelassen wurde
-              debugText.setAttribute('text', `value: A-Taste losgelassen; color: yellow; width: 4`);
-              console.log("A-Taste losgelassen");
-            }
-          } else {
-            debugText.setAttribute('text', `value: Gamepad nicht erkannt; color: red; width: 4`);
-            console.log("Kein Gamepad erkannt.");
-          }
-          requestAnimationFrame(checkGamepad);  // Prüfe ständig auf Gamepad-Eingaben
-        }
-
         // Event Listener für den VR-Button zum Starten/Stoppen
         startButton.addEventListener('click', function () {
           toggleAnimation();  // Animation starten/stoppen
@@ -130,8 +110,19 @@
           console.log("VR-Button gedrückt.");
         });
 
-        // Gamepad-Überprüfung starten
-        checkGamepad();
+        // WebXR Eingabesystem für Controller-Ereignisse
+        const rightController = document.getElementById('rightController');
+        rightController.addEventListener('triggerdown', function () {
+          toggleAnimation();  // Animation starten/stoppen
+          debugText.setAttribute('text', `value: Trigger gedrückt; color: yellow; width: 4`);
+          console.log("Trigger gedrückt.");
+        });
+
+        rightController.addEventListener('triggerup', function () {
+          debugText.setAttribute('text', `value: Trigger losgelassen; color: yellow; width: 4`);
+          console.log("Trigger losgelassen.");
+        });
+
       </script>
     </a-scene>
   </body>
