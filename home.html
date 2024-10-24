@@ -74,6 +74,8 @@
 
         // Punkte animieren, indem sie um den Spieler rotieren
         function rotatePoints() {
+          if (!isAnimating) return;  // Wenn Animation deaktiviert ist, nichts tun
+          
           const points = document.querySelectorAll('a-sphere');
           
           points.forEach((point) => {
@@ -102,7 +104,7 @@
           console.log(`Animation ${isAnimating ? 'gestartet' : 'gestoppt'}`);
 
           if (isAnimating) {
-            rotatePoints();  // Starte die Animation, falls aktiviert
+            rotatePoints();  // Starte die Animation
           } else {
             cancelAnimationFrame(animationFrameId);  // Stoppe die Animation
           }
