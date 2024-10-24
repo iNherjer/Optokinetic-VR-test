@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Verbesserte Version</title>
+    <title>A-Frame Optokinetik - Korrigierte Version</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
   <body>
@@ -26,7 +26,7 @@
 
       <!-- Sound Asset -->
       <a-assets>
-        <!-- Füge hier deine Audiodatei ein -->
+        <!-- Audiodatei im Hauptverzeichnis -->
         <audio id="hum-sound" src="hum-sound.mp3"></audio>
       </a-assets>
 
@@ -109,6 +109,7 @@
             this.isAnimating = false;
             this.animationSpeed = 0.2; // Initiale Rotationsgeschwindigkeit
             this.rotationAxis = new THREE.Vector3(0, 1, 0); // Standardmäßig um die Y-Achse rotieren
+            this.totalRotationAngle = 0; // Gesamter Rotationswinkel
             this.createPoints();
           },
           createPoints: function () {
@@ -147,17 +148,29 @@
             });
             this.el.appendChild(soundEntity);
             this.soundEntity = soundEntity;
+
+            // Speichere die Anfangspositionen
+            this.initialPointsRotation = this.points.rotation.clone();
+            this.initialSoundPosition = this.soundEntity.object3D.position.clone();
           },
           tick: function (time, timeDelta) {
             if (!this.isAnimating) return;
             const delta = timeDelta / 1000; // Konvertiere Zeitdelta in Sekunden
             const rotationAngle = this.animationSpeed * delta;
 
-            // Drehe die Punkte
-            this.points.rotateOnAxis(this.rotationAxis, rotationAngle);
+            // Aktualisiere den gesamten Rotationswinkel
+            this.totalRotationAngle += rotationAngle;
 
-            // Drehe das Sound-Entity um die gleiche Achse
-            this.soundEntity.object3D.position.applyAxisAngle(this.rotationAxis, rotationAngle);
+            // Berechne den Rotationsquaternion
+            const quaternion = new THREE.Quaternion();
+            quaternion.setFromAxisAngle(this.rotationAxis, this.totalRotationAngle);
+
+            // Setze die Rotation der Punkte relativ zum festen Koordinatensystem
+            this.points.quaternion.copy(quaternion);
+
+            // Setze die Position des Sound-Entities
+            const rotatedSoundPosition = this.initialSoundPosition.clone().applyQuaternion(quaternion);
+            this.soundEntity.object3D.position.copy(rotatedSoundPosition);
           },
           toggleAnimation: function () {
             this.isAnimating = !this.isAnimating;
@@ -179,10 +192,12 @@
             }
           },
           setRotationAxis: function (axis) {
-            // Rotationsachse relativ zum Menü (fixes Koordinatensystem)
-            const menuRotation = document.getElementById('menu').object3D.rotation;
-            const transformedAxis = axis.clone().applyEuler(menuRotation);
-            this.rotationAxis = transformedAxis.normalize();
+            // Rotationsachse im festen Koordinatensystem setzen
+            this.rotationAxis = axis.clone().normalize();
+
+            // Gesamten Rotationswinkel zurücksetzen, um Sprünge zu vermeiden
+            this.totalRotationAngle = 0;
+
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
