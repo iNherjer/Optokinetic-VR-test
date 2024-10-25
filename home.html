@@ -139,7 +139,11 @@
       ></a-entity>
 
       <!-- Controller für Interaktionen -->
-      <a-entity laser-controls="hand: right" id="rightController"></a-entity>
+      <a-entity
+        laser-controls="hand: right"
+        id="rightController"
+        raycaster="objects: .clickable"
+      ></a-entity>
 
       <!-- Script -->
       <script>
@@ -158,7 +162,11 @@
             const radius = 20;
             const positions = new Float32Array(this.numPoints * 3); // Verwende TypedArray für bessere Performance
             const geometry = new THREE.BufferGeometry();
-            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, sizeAttenuation: true }); // Verwende sizeAttenuation für bessere Performance bei Entfernungen
+            const material = new THREE.PointsMaterial({
+              color: 0xffffff,
+              size: 0.05,
+              sizeAttenuation: true,
+            }); // Verwende sizeAttenuation für bessere Performance bei Entfernungen
 
             for (let i = 0; i < this.numPoints; i++) {
               const theta = Math.random() * 2 * Math.PI;
@@ -190,11 +198,10 @@
               rolloffFactor: 1,
               panningModel: 'HRTF',
             });
-            this.el.appendChild(soundEntity);
+            this.el.sceneEl.appendChild(soundEntity); // SoundEntity zur Szene hinzufügen
             this.soundEntity = soundEntity;
 
-            // Speichere die Anfangspositionen
-            this.initialPointsRotation = this.points.rotation.clone();
+            // Speichere die Anfangsposition
             this.initialSoundPosition = this.soundEntity.object3D.position.clone();
           },
           updatePoints: function () {
@@ -364,9 +371,15 @@
 
         // Event Listener für den Trigger des Controllers
         const rightController = document.getElementById('rightController');
-        rightController.addEventListener('triggerdown', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].toggleAnimation();
+
+        rightController.addEventListener('triggerdown', function (evt) {
+          // Überprüfen, ob der Controller auf ein interaktives Element zeigt
+          const intersectedEls = rightController.components.raycaster.intersectedEls;
+          if (intersectedEls.length === 0) {
+            // Keine interaktiven Elemente anvisiert, Animation umschalten
+            const pointsEntity = document.getElementById('points-entity');
+            pointsEntity.components['optimized-points'].toggleAnimation();
+          }
         });
 
         // Event Listener für die A- und B-Tasten des rechten Controllers
