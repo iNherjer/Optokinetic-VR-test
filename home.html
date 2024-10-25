@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Korrigierte Version</title>
+    <title>A-Frame Optokinetik - Aktualisierte Version</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
   <body>
@@ -15,7 +15,7 @@
         wasd-controls="acceleration: 50"
         look-controls="pointerLockEnabled: true"
       >
-        <a-camera></a-camera>
+        <a-camera audio-listener></a-camera>
       </a-entity>
 
       <!-- Schwarzer Hintergrund -->
@@ -84,18 +84,18 @@
         <a-entity id="scaleButtons" position="0 -1.4 0">
           <a-entity
             id="scaleUpButton"
-            geometry="primitive: plane; width: 0.5; height: 0.5"
+            geometry="primitive: plane; width: 1.0; height: 0.5"
             material="color: cyan"
-            position="-0.5 0 0"
-            text="value: + Skalierung; align: center; width: 4; color: black"
+            position="-0.7 0 0"
+            text="value: + Skalierung; align: center; width: 6; color: black"
             class="clickable"
           ></a-entity>
           <a-entity
             id="scaleDownButton"
-            geometry="primitive: plane; width: 0.5; height: 0.5"
+            geometry="primitive: plane; width: 1.0; height: 0.5"
             material="color: magenta"
-            position="0.5 0 0"
-            text="value: - Skalierung; align: center; width: 4; color: black"
+            position="0.7 0 0"
+            text="value: - Skalierung; align: center; width: 6; color: black"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -235,8 +235,18 @@
             const menu = document.getElementById('menu');
             if (this.isAnimating) {
               menu.setAttribute('visible', 'false');
+              // Sound starten
+              const soundComponent = this.soundEntity.components.sound;
+              if (!soundComponent.isPlaying) {
+                soundComponent.playSound();
+              }
             } else {
               menu.setAttribute('visible', 'true');
+              // Sound stoppen
+              const soundComponent = this.soundEntity.components.sound;
+              if (soundComponent.isPlaying) {
+                soundComponent.stopSound();
+              }
             }
           },
           setRotationAxis: function (axis) {
@@ -265,7 +275,7 @@
           },
           adjustScale: function (delta) {
             this.scale += delta;
-            this.scale = Math.max(0.01, this.scale); // Mindestskalierung
+            this.scale = Math.max(0.2, this.scale); // Mindestskalierung auf 0.2 gesetzt
             this.points.scale.set(this.scale, this.scale, this.scale);
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
@@ -327,12 +337,12 @@
         // Event Listener für die Skalierungs-Buttons
         document.getElementById('scaleUpButton').addEventListener('click', function () {
           const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustScale(0.1);
+          pointsEntity.components['optimized-points'].adjustScale(0.2);
         });
 
         document.getElementById('scaleDownButton').addEventListener('click', function () {
           const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustScale(-0.1);
+          pointsEntity.components['optimized-points'].adjustScale(-0.2);
         });
 
         // Event Listener für die Punktanzahl-Buttons
