@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8">
-    <title>A-Frame Optokinetik - Aktualisierte Version</title>
+    <title>A-Frame Optokinetik - Fehlerbehebte Version</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
   <body>
@@ -139,11 +139,7 @@
       ></a-entity>
 
       <!-- Controller für Interaktionen -->
-      <a-entity
-        laser-controls="hand: right"
-        id="rightController"
-        raycaster="objects: .clickable"
-      ></a-entity>
+      <a-entity laser-controls="hand: right" id="rightController"></a-entity>
 
       <!-- Script -->
       <script>
@@ -155,18 +151,18 @@
             this.rotationAxis = new THREE.Vector3(0, 1, 0); // Standardmäßig um die Y-Achse rotieren
             this.totalRotationAngle = 0; // Gesamter Rotationswinkel
             this.scale = 1; // Skalierungsfaktor
-            this.numPoints = 2000; // Angepasste Anzahl der Punkte für bessere Performance
+            this.numPoints = 2000; // Anzahl der Punkte
             this.createPoints();
           },
           createPoints: function () {
             const radius = 20;
-            const positions = new Float32Array(this.numPoints * 3); // Verwende TypedArray für bessere Performance
+            const positions = new Float32Array(this.numPoints * 3);
             const geometry = new THREE.BufferGeometry();
             const material = new THREE.PointsMaterial({
               color: 0xffffff,
               size: 0.05,
               sizeAttenuation: true,
-            }); // Verwende sizeAttenuation für bessere Performance bei Entfernungen
+            });
 
             for (let i = 0; i < this.numPoints; i++) {
               const theta = Math.random() * 2 * Math.PI;
@@ -180,10 +176,15 @@
             }
 
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.computeBoundingSphere(); // Berechne Bounding Sphere für schnellere Frustum Culling
+            geometry.computeBoundingSphere();
             this.points = new THREE.Points(geometry, material);
+            this.points.scale.set(this.scale, this.scale, this.scale);
             this.el.setObject3D('mesh', this.points);
 
+            // Sound-Entity erstellen
+            this.createSoundEntity();
+          },
+          createSoundEntity: function () {
             // Sound an ein Objekt binden, das sich mit den Punkten bewegt
             const soundEntity = document.createElement('a-entity');
             soundEntity.setAttribute('position', '30 0 0'); // Startposition auf dem Radius
@@ -198,7 +199,7 @@
               rolloffFactor: 1,
               panningModel: 'HRTF',
             });
-            this.el.sceneEl.appendChild(soundEntity); // SoundEntity zur Szene hinzufügen
+            this.el.appendChild(soundEntity);
             this.soundEntity = soundEntity;
 
             // Speichere die Anfangsposition
@@ -210,7 +211,7 @@
           },
           tick: function (time, timeDelta) {
             if (!this.isAnimating) return;
-            const delta = timeDelta / 1000; // Konvertiere Zeitdelta in Sekunden
+            const delta = timeDelta / 1000;
             const rotationAngle = this.animationSpeed * delta;
 
             // Aktualisiere den gesamten Rotationswinkel
@@ -220,7 +221,7 @@
             const quaternion = new THREE.Quaternion();
             quaternion.setFromAxisAngle(this.rotationAxis, this.totalRotationAngle);
 
-            // Setze die Rotation der Punkte relativ zum festen Koordinatensystem
+            // Setze die Rotation der Punkte
             this.points.quaternion.copy(quaternion);
 
             // Setze die Position des Sound-Entities
@@ -257,10 +258,7 @@
             }
           },
           setRotationAxis: function (axis) {
-            // Rotationsachse im festen Koordinatensystem setzen
             this.rotationAxis = axis.clone().normalize();
-
-            // Gesamten Rotationswinkel zurücksetzen, um Sprünge zu vermeiden
             this.totalRotationAngle = 0;
 
             const debugText = document.getElementById('debugText');
@@ -272,7 +270,7 @@
           },
           adjustSpeed: function (delta) {
             this.animationSpeed += delta;
-            this.animationSpeed = Math.max(0.1, this.animationSpeed); // Mindestgeschwindigkeit
+            this.animationSpeed = Math.max(0.1, this.animationSpeed);
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
@@ -282,7 +280,7 @@
           },
           adjustScale: function (delta) {
             this.scale += delta;
-            this.scale = Math.max(0.2, this.scale); // Mindestskalierung auf 0.2 gesetzt
+            this.scale = Math.max(0.2, this.scale);
             this.points.scale.set(this.scale, this.scale, this.scale);
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
@@ -293,7 +291,7 @@
           },
           adjustPointCount: function (delta) {
             this.numPoints += delta;
-            this.numPoints = Math.max(100, this.numPoints); // Mindestanzahl der Punkte
+            this.numPoints = Math.max(100, this.numPoints);
             this.updatePoints();
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
@@ -374,8 +372,8 @@
 
         rightController.addEventListener('triggerdown', function (evt) {
           // Überprüfen, ob der Controller auf ein interaktives Element zeigt
-          const intersectedEls = rightController.components.raycaster.intersectedEls;
-          if (intersectedEls.length === 0) {
+          const intersectedEl = evt.detail.intersectedEl;
+          if (!intersectedEl) {
             // Keine interaktiven Elemente anvisiert, Animation umschalten
             const pointsEntity = document.getElementById('points-entity');
             pointsEntity.components['optimized-points'].toggleAnimation();
