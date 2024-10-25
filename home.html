@@ -84,7 +84,7 @@
         <a-entity id="scaleButtons" position="0 -1.4 0">
           <a-entity
             id="scaleUpButton"
-            geometry="primitive: plane; width: 0.5; height: 0.5"
+            geometry="primitive: plane; width: 0.8; height: 0.3"
             material="color: cyan"
             position="-0.5 0 0"
             text="value: + Skalierung; align: center; width: 4; color: black"
@@ -92,7 +92,7 @@
           ></a-entity>
           <a-entity
             id="scaleDownButton"
-            geometry="primitive: plane; width: 0.5; height: 0.5"
+            geometry="primitive: plane; width: 0.8; height: 0.3"
             material="color: magenta"
             position="0.5 0 0"
             text="value: - Skalierung; align: center; width: 4; color: black"
@@ -144,7 +144,9 @@
       <!-- Script -->
       <script>
         AFRAME.registerComponent('optimized-points', {
-          schema: {},
+          schema: {
+            timeScale: { type: 'number', default: 1 } // Konfigurierbarer Zeitskalierungsfaktor
+          },
           init: function () {
             this.isAnimating = false;
             this.animationSpeed = 0.2; // Initiale Rotationsgeschwindigkeit
@@ -160,16 +162,7 @@
             const geometry = new THREE.BufferGeometry();
             const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, sizeAttenuation: true }); // Verwende sizeAttenuation für bessere Performance bei Entfernungen
 
-            for (let i = 0; i < this.numPoints; i++) {
-              const theta = Math.random() * 2 * Math.PI;
-              const phi = Math.acos(2 * Math.random() - 1);
-              const x = radius * Math.sin(phi) * Math.cos(theta);
-              const y = radius * Math.cos(phi);
-              const z = radius * Math.sin(phi) * Math.sin(theta);
-              positions[i * 3] = x;
-              positions[i * 3 + 1] = y;
-              positions[i * 3 + 2] = z;
-            }
+            this.generateRandomPositions(positions, radius);
 
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.computeBoundingSphere(); // Berechne Bounding Sphere für schnellere Frustum Culling
@@ -197,179 +190,12 @@
             this.initialPointsRotation = this.points.rotation.clone();
             this.initialSoundPosition = this.soundEntity.object3D.position.clone();
           },
-          updatePoints: function () {
-            this.el.removeObject3D('mesh');
-            this.createPoints();
-          },
-          tick: function (time, timeDelta) {
-            if (!this.isAnimating) return;
-            const delta = timeDelta / 1000; // Konvertiere Zeitdelta in Sekunden
-            const rotationAngle = this.animationSpeed * delta;
-
-            // Aktualisiere den gesamten Rotationswinkel
-            this.totalRotationAngle += rotationAngle;
-
-            // Berechne den Rotationsquaternion
-            const quaternion = new THREE.Quaternion();
-            quaternion.setFromAxisAngle(this.rotationAxis, this.totalRotationAngle);
-
-            // Setze die Rotation der Punkte relativ zum festen Koordinatensystem
-            this.points.quaternion.copy(quaternion);
-
-            // Setze die Position des Sound-Entities
-            const rotatedSoundPosition = this.initialSoundPosition.clone().applyQuaternion(quaternion);
-            this.soundEntity.object3D.position.copy(rotatedSoundPosition);
-          },
-          toggleAnimation: function () {
-            this.isAnimating = !this.isAnimating;
-            const debugText = document.getElementById('debugText');
-            debugText.setAttribute(
-              'text',
-              `value: Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}; color: ${
-                this.isAnimating ? 'green' : 'red'
-              }; width: 8`
-            );
-            console.log(`Animation ${this.isAnimating ? 'gestartet' : 'gestoppt'}`);
-
-            // Menü anzeigen oder ausblenden
-            const menu = document.getElementById('menu');
-            if (this.isAnimating) {
-              menu.setAttribute('visible', 'false');
-            } else {
-              menu.setAttribute('visible', 'true');
-            }
-          },
-          setRotationAxis: function (axis) {
-            // Rotationsachse im festen Koordinatensystem setzen
-            this.rotationAxis = axis.clone().normalize();
-
-            // Gesamten Rotationswinkel zurücksetzen, um Sprünge zu vermeiden
-            this.totalRotationAngle = 0;
-
-            const debugText = document.getElementById('debugText');
-            debugText.setAttribute(
-              'text',
-              `value: Rotationsachse geändert; color: yellow; width: 8`
-            );
-            console.log('Rotationsachse geändert.');
-          },
-          adjustSpeed: function (delta) {
-            this.animationSpeed += delta;
-            this.animationSpeed = Math.max(0.1, this.animationSpeed); // Mindestgeschwindigkeit
-            const debugText = document.getElementById('debugText');
-            debugText.setAttribute(
-              'text',
-              `value: Geschwindigkeit: ${this.animationSpeed.toFixed(1)}; color: yellow; width: 8`
-            );
-            console.log(`Geschwindigkeit angepasst: ${this.animationSpeed}`);
-          },
-          adjustScale: function (delta) {
-            this.scale += delta;
-            this.scale = Math.max(0.01, this.scale); // Mindestskalierung
-            this.points.scale.set(this.scale, this.scale, this.scale);
-            const debugText = document.getElementById('debugText');
-            debugText.setAttribute(
-              'text',
-              `value: Skalierung: ${this.scale.toFixed(1)}; color: yellow; width: 8`
-            );
-            console.log(`Skalierung angepasst: ${this.scale}`);
-          },
-          adjustPointCount: function (delta) {
-            this.numPoints += delta;
-            this.numPoints = Math.max(100, this.numPoints); // Mindestanzahl der Punkte
-            this.updatePoints();
-            const debugText = document.getElementById('debugText');
-            debugText.setAttribute(
-              'text',
-              `value: Anzahl der Punkte: ${this.numPoints}; color: yellow; width: 8`
-            );
-            console.log(`Anzahl der Punkte angepasst: ${this.numPoints}`);
-          },
-          toggleSound: function () {
-            const soundComponent = this.soundEntity.components.sound;
-            if (soundComponent.isPlaying) {
-              soundComponent.stopSound();
-              console.log('Sound gestoppt.');
-            } else {
-              soundComponent.playSound();
-              console.log('Sound gestartet.');
-            }
-          },
-        });
-
-        // Event Listener für die Achsen-Buttons
-        document.getElementById('xButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(1, 0, 0));
-        });
-
-        document.getElementById('yButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(0, 1, 0));
-        });
-
-        document.getElementById('zButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(0, 0, 1));
-        });
-
-        // Event Listener für die Geschwindigkeits-Buttons
-        document.getElementById('speedUpButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
-        });
-
-        document.getElementById('speedDownButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
-        });
-
-        // Event Listener für die Skalierungs-Buttons
-        document.getElementById('scaleUpButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustScale(0.1);
-        });
-
-        document.getElementById('scaleDownButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustScale(-0.1);
-        });
-
-        // Event Listener für die Punktanzahl-Buttons
-        document.getElementById('pointsIncreaseButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustPointCount(500);
-        });
-
-        document.getElementById('pointsDecreaseButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustPointCount(-500);
-        });
-
-        // Event Listener für den Sound-Button
-        document.getElementById('soundToggleButton').addEventListener('click', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].toggleSound();
-        });
-
-        // Event Listener für den Trigger des Controllers
-        const rightController = document.getElementById('rightController');
-        rightController.addEventListener('triggerdown', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].toggleAnimation();
-        });
-
-        // Event Listener für die A- und B-Tasten des rechten Controllers
-        rightController.addEventListener('abuttondown', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
-        });
-
-        rightController.addEventListener('bbuttondown', function () {
-          const pointsEntity = document.getElementById('points-entity');
-          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
-        });
-      </script>
-    </a-scene>
-  </body>
-</html>
+          generateRandomPositions: function (positions, radius) {
+            for (let i = 0; i < this.numPoints; i++) {
+              const theta = Math.random() * 2 * Math.PI;
+              const phi = Math.acos(2 * Math.random() - 1);
+              const x = radius * Math.sin(phi) * Math.cos(theta);
+              const y = radius * Math.cos(phi);
+              const z = radius * Math.sin(phi) * Math.sin(theta);
+              positions[i * 3] = x;
+              positions[i * 3
