@@ -39,7 +39,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: red"
             position="-1 0 0"
-            text="value: X; align: center; width: 5; color: white"
+            text="value: X; align: center; width: 4; color: white"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -47,7 +47,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: green"
             position="0 0 0"
-            text="value: Y; align: center; width: 5; color: white"
+            text="value: Y; align: center; width: 4; color: white"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -55,7 +55,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: blue"
             position="1 0 0"
-            text="value: Z; align: center; width: 5; color: white"
+            text="value: Z; align: center; width: 4; color: white"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -67,7 +67,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: yellow"
             position="-0.5 0 0"
-            text="value: +; align: center; width: 5; color: black"
+            text="value: +; align: center; width: 4; color: black"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -75,7 +75,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: orange"
             position="0.5 0 0"
-            text="value: -; align: center; width: 5; color: black"
+            text="value: -; align: center; width: 4; color: black"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -87,7 +87,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: cyan"
             position="-0.5 0 0"
-            text="value: + Skalierung; align: center; width: 5; color: black"
+            text="value: + Skalierung; align: center; width: 4; color: black"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -95,7 +95,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: magenta"
             position="0.5 0 0"
-            text="value: - Skalierung; align: center; width: 5; color: black"
+            text="value: - Skalierung; align: center; width: 4; color: black"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -107,7 +107,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: green"
             position="-0.5 0 0"
-            text="value: + Punkte; align: center; width: 5; color: black"
+            text="value: + Punkte; align: center; width: 4; color: black"
             class="clickable"
           ></a-entity>
           <a-entity
@@ -115,7 +115,7 @@
             geometry="primitive: plane; width: 0.5; height: 0.5"
             material="color: red"
             position="0.5 0 0"
-            text="value: - Punkte; align: center; width: 5; color: black"
+            text="value: - Punkte; align: center; width: 4; color: black"
             class="clickable"
           ></a-entity>
         </a-entity>
@@ -126,7 +126,7 @@
           geometry="primitive: plane; width: 1; height: 0.5"
           material="color: purple"
           position="0 -2.8 0"
-          text="value: Sound An/Aus; align: center; width: 5; color: white"
+          text="value: Sound An/Aus; align: center; width: 4; color: white"
           class="clickable"
         ></a-entity>
       </a-entity>
@@ -265,7 +265,7 @@
           },
           adjustScale: function (delta) {
             this.scale += delta;
-            this.scale = Math.max(0.5, this.scale); // Mindestskalierung
+            this.scale = Math.max(0.01, this.scale); // Mindestskalierung
             this.points.scale.set(this.scale, this.scale, this.scale);
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
