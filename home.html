@@ -80,12 +80,52 @@
           ></a-entity>
         </a-entity>
 
+        <!-- Buttons zur Anpassung der Skalierung -->
+        <a-entity id="scaleButtons" position="0 -1.4 0">
+          <a-entity
+            id="scaleUpButton"
+            geometry="primitive: plane; width: 0.5; height: 0.5"
+            material="color: cyan"
+            position="-0.5 0 0"
+            text="value: + Skalierung; align: center; width: 5; color: black"
+            class="clickable"
+          ></a-entity>
+          <a-entity
+            id="scaleDownButton"
+            geometry="primitive: plane; width: 0.5; height: 0.5"
+            material="color: magenta"
+            position="0.5 0 0"
+            text="value: - Skalierung; align: center; width: 5; color: black"
+            class="clickable"
+          ></a-entity>
+        </a-entity>
+
+        <!-- Buttons zur Anpassung der Punktanzahl -->
+        <a-entity id="pointCountButtons" position="0 -2.1 0">
+          <a-entity
+            id="pointsIncreaseButton"
+            geometry="primitive: plane; width: 0.5; height: 0.5"
+            material="color: green"
+            position="-0.5 0 0"
+            text="value: + Punkte; align: center; width: 5; color: black"
+            class="clickable"
+          ></a-entity>
+          <a-entity
+            id="pointsDecreaseButton"
+            geometry="primitive: plane; width: 0.5; height: 0.5"
+            material="color: red"
+            position="0.5 0 0"
+            text="value: - Punkte; align: center; width: 5; color: black"
+            class="clickable"
+          ></a-entity>
+        </a-entity>
+
         <!-- Button zum Ein-/Ausschalten des Sounds -->
         <a-entity
           id="soundToggleButton"
           geometry="primitive: plane; width: 1; height: 0.5"
           material="color: purple"
-          position="0 -1.4 0"
+          position="0 -2.8 0"
           text="value: Sound An/Aus; align: center; width: 5; color: white"
           class="clickable"
         ></a-entity>
@@ -110,16 +150,17 @@
             this.animationSpeed = 0.2; // Initiale Rotationsgeschwindigkeit
             this.rotationAxis = new THREE.Vector3(0, 1, 0); // Standardmäßig um die Y-Achse rotieren
             this.totalRotationAngle = 0; // Gesamter Rotationswinkel
+            this.scale = 1; // Skalierungsfaktor
+            this.numPoints = 2000; // Angepasste Anzahl der Punkte für bessere Performance
             this.createPoints();
           },
           createPoints: function () {
-            const numPoints = 2000; // Angepasste Anzahl der Punkte für bessere Performance
             const radius = 20;
-            const positions = new Float32Array(numPoints * 3); // Verwende TypedArray für bessere Performance
+            const positions = new Float32Array(this.numPoints * 3); // Verwende TypedArray für bessere Performance
             const geometry = new THREE.BufferGeometry();
             const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, sizeAttenuation: true }); // Verwende sizeAttenuation für bessere Performance bei Entfernungen
 
-            for (let i = 0; i < numPoints; i++) {
+            for (let i = 0; i < this.numPoints; i++) {
               const theta = Math.random() * 2 * Math.PI;
               const phi = Math.acos(2 * Math.random() - 1);
               const x = radius * Math.sin(phi) * Math.cos(theta);
@@ -155,6 +196,10 @@
             // Speichere die Anfangspositionen
             this.initialPointsRotation = this.points.rotation.clone();
             this.initialSoundPosition = this.soundEntity.object3D.position.clone();
+          },
+          updatePoints: function () {
+            this.el.removeObject3D('mesh');
+            this.createPoints();
           },
           tick: function (time, timeDelta) {
             if (!this.isAnimating) return;
@@ -218,6 +263,28 @@
             );
             console.log(`Geschwindigkeit angepasst: ${this.animationSpeed}`);
           },
+          adjustScale: function (delta) {
+            this.scale += delta;
+            this.scale = Math.max(0.5, this.scale); // Mindestskalierung
+            this.points.scale.set(this.scale, this.scale, this.scale);
+            const debugText = document.getElementById('debugText');
+            debugText.setAttribute(
+              'text',
+              `value: Skalierung: ${this.scale.toFixed(1)}; color: yellow; width: 8`
+            );
+            console.log(`Skalierung angepasst: ${this.scale}`);
+          },
+          adjustPointCount: function (delta) {
+            this.numPoints += delta;
+            this.numPoints = Math.max(100, this.numPoints); // Mindestanzahl der Punkte
+            this.updatePoints();
+            const debugText = document.getElementById('debugText');
+            debugText.setAttribute(
+              'text',
+              `value: Anzahl der Punkte: ${this.numPoints}; color: yellow; width: 8`
+            );
+            console.log(`Anzahl der Punkte angepasst: ${this.numPoints}`);
+          },
           toggleSound: function () {
             const soundComponent = this.soundEntity.components.sound;
             if (soundComponent.isPlaying) {
@@ -255,6 +322,28 @@
         document.getElementById('speedDownButton').addEventListener('click', function () {
           const pointsEntity = document.getElementById('points-entity');
           pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
+        });
+
+        // Event Listener für die Skalierungs-Buttons
+        document.getElementById('scaleUpButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustScale(0.1);
+        });
+
+        document.getElementById('scaleDownButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustScale(-0.1);
+        });
+
+        // Event Listener für die Punktanzahl-Buttons
+        document.getElementById('pointsIncreaseButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustPointCount(500);
+        });
+
+        document.getElementById('pointsDecreaseButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustPointCount(-500);
         });
 
         // Event Listener für den Sound-Button
