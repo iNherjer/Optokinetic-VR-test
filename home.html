@@ -186,4 +186,47 @@
           pointsEntity.components['optimized-points'].adjustScale(-0.2);
         });
 
-        // Event Listener für die Punktanzahl-Butt
+        // Event Listener für die Punktanzahl-Buttons
+        document.getElementById('pointsIncreaseButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustPointCount(500);
+        });
+
+        document.getElementById('pointsDecreaseButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustPointCount(-500);
+        });
+
+        // Event Listener für den Sound-Button
+        document.getElementById('soundToggleButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].toggleSound();
+        });
+
+        // Event Listener für den Trigger des Controllers
+        const rightController = document.getElementById('rightController');
+
+        rightController.addEventListener('triggerdown', function (evt) {
+          // Überprüfen, ob der Controller auf ein interaktives Element zeigt
+          const intersectedEl = evt.detail.intersectedEl;
+          if (!intersectedEl) {
+            // Keine interaktiven Elemente anvisiert, Animation umschalten
+            const pointsEntity = document.getElementById('points-entity');
+            pointsEntity.components['optimized-points'].toggleAnimation();
+          }
+        });
+
+        // Event Listener für die A- und B-Tasten des rechten Controllers
+        rightController.addEventListener('abuttondown', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
+        });
+
+        rightController.addEventListener('bbuttondown', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>
