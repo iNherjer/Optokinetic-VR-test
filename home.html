@@ -166,7 +166,7 @@
               color: 0xffffff,
               size: 0.05,
               sizeAttenuation: true,
-            });
+            }); // Verwende sizeAttenuation für bessere Performance bei Entfernungen
 
             for (let i = 0; i < this.numPoints; i++) {
               const theta = Math.random() * 2 * Math.PI;
@@ -180,7 +180,7 @@
             }
 
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.computeBoundingSphere();
+            geometry.computeBoundingSphere(); // Berechne Bounding Sphere für schnellere Frustum Culling
             this.points = new THREE.Points(geometry, material);
             this.el.setObject3D('mesh', this.points);
 
@@ -198,8 +198,11 @@
               rolloffFactor: 1,
               panningModel: 'HRTF',
             });
-            this.el.appendChild(soundEntity); // SoundEntity als Kind von points-entity hinzufügen
+            this.el.sceneEl.appendChild(soundEntity); // SoundEntity zur Szene hinzufügen
             this.soundEntity = soundEntity;
+
+            // Speichere die Anfangsposition
+            this.initialSoundPosition = this.soundEntity.object3D.position.clone();
           },
           updatePoints: function () {
             this.el.removeObject3D('mesh');
@@ -207,7 +210,7 @@
           },
           tick: function (time, timeDelta) {
             if (!this.isAnimating) return;
-            const delta = timeDelta / 1000;
+            const delta = timeDelta / 1000; // Konvertiere Zeitdelta in Sekunden
             const rotationAngle = this.animationSpeed * delta;
 
             // Aktualisiere den gesamten Rotationswinkel
@@ -217,8 +220,12 @@
             const quaternion = new THREE.Quaternion();
             quaternion.setFromAxisAngle(this.rotationAxis, this.totalRotationAngle);
 
-            // Setze die Rotation des Entities
-            this.el.object3D.quaternion.copy(quaternion);
+            // Setze die Rotation der Punkte relativ zum festen Koordinatensystem
+            this.points.quaternion.copy(quaternion);
+
+            // Setze die Position des Sound-Entities
+            const rotatedSoundPosition = this.initialSoundPosition.clone().applyQuaternion(quaternion);
+            this.soundEntity.object3D.position.copy(rotatedSoundPosition);
           },
           toggleAnimation: function () {
             this.isAnimating = !this.isAnimating;
@@ -235,22 +242,25 @@
             const menu = document.getElementById('menu');
             if (this.isAnimating) {
               menu.setAttribute('visible', 'false');
-              // Entfernen der 'clickable'-Klasse von allen Buttons
-              const buttons = menu.querySelectorAll('.clickable');
-              buttons.forEach(function (button) {
-                button.classList.remove('clickable');
-              });
+              // Sound starten
+              const soundComponent = this.soundEntity.components.sound;
+              if (!soundComponent.isPlaying) {
+                soundComponent.playSound();
+              }
             } else {
               menu.setAttribute('visible', 'true');
-              // Hinzufügen der 'clickable'-Klasse zu allen Buttons
-              const buttons = menu.querySelectorAll('[geometry]');
-              buttons.forEach(function (button) {
-                button.classList.add('clickable');
-              });
+              // Sound stoppen
+              const soundComponent = this.soundEntity.components.sound;
+              if (soundComponent.isPlaying) {
+                soundComponent.stopSound();
+              }
             }
           },
           setRotationAxis: function (axis) {
+            // Rotationsachse im festen Koordinatensystem setzen
             this.rotationAxis = axis.clone().normalize();
+
+            // Gesamten Rotationswinkel zurücksetzen, um Sprünge zu vermeiden
             this.totalRotationAngle = 0;
 
             const debugText = document.getElementById('debugText');
@@ -262,7 +272,7 @@
           },
           adjustSpeed: function (delta) {
             this.animationSpeed += delta;
-            this.animationSpeed = Math.max(0.1, this.animationSpeed);
+            this.animationSpeed = Math.max(0.1, this.animationSpeed); // Mindestgeschwindigkeit
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
@@ -272,8 +282,8 @@
           },
           adjustScale: function (delta) {
             this.scale += delta;
-            this.scale = Math.max(0.2, this.scale);
-            this.el.object3D.scale.set(this.scale, this.scale, this.scale);
+            this.scale = Math.max(0.2, this.scale); // Mindestskalierung auf 0.2 gesetzt
+            this.points.scale.set(this.scale, this.scale, this.scale);
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
               'text',
@@ -283,7 +293,7 @@
           },
           adjustPointCount: function (delta) {
             this.numPoints += delta;
-            this.numPoints = Math.max(100, this.numPoints);
+            this.numPoints = Math.max(100, this.numPoints); // Mindestanzahl der Punkte
             this.updatePoints();
             const debugText = document.getElementById('debugText');
             debugText.setAttribute(
@@ -304,8 +314,84 @@
           },
         });
 
-        // Event Listener für die Buttons (keine Änderungen erforderlich)
-        // ... (Ihre vorhandenen Event Listener bleiben gleich)
+        // Event Listener für die Achsen-Buttons
+        document.getElementById('xButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(1, 0, 0));
+        });
+
+        document.getElementById('yButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(0, 1, 0));
+        });
+
+        document.getElementById('zButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].setRotationAxis(new THREE.Vector3(0, 0, 1));
+        });
+
+        // Event Listener für die Geschwindigkeits-Buttons
+        document.getElementById('speedUpButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
+        });
+
+        document.getElementById('speedDownButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
+        });
+
+        // Event Listener für die Skalierungs-Buttons
+        document.getElementById('scaleUpButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustScale(0.2);
+        });
+
+        document.getElementById('scaleDownButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustScale(-0.2);
+        });
+
+        // Event Listener für die Punktanzahl-Buttons
+        document.getElementById('pointsIncreaseButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustPointCount(500);
+        });
+
+        document.getElementById('pointsDecreaseButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustPointCount(-500);
+        });
+
+        // Event Listener für den Sound-Button
+        document.getElementById('soundToggleButton').addEventListener('click', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].toggleSound();
+        });
+
+        // Event Listener für den Trigger des Controllers
+        const rightController = document.getElementById('rightController');
+
+        rightController.addEventListener('triggerdown', function (evt) {
+          // Überprüfen, ob der Controller auf ein interaktives Element zeigt
+          const intersectedEls = rightController.components.raycaster.intersectedEls;
+          if (intersectedEls.length === 0) {
+            // Keine interaktiven Elemente anvisiert, Animation umschalten
+            const pointsEntity = document.getElementById('points-entity');
+            pointsEntity.components['optimized-points'].toggleAnimation();
+          }
+        });
+
+        // Event Listener für die A- und B-Tasten des rechten Controllers
+        rightController.addEventListener('abuttondown', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(0.2);
+        });
+
+        rightController.addEventListener('bbuttondown', function () {
+          const pointsEntity = document.getElementById('points-entity');
+          pointsEntity.components['optimized-points'].adjustSpeed(-0.2);
+        });
       </script>
     </a-scene>
   </body>
